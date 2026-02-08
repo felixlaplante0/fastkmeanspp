@@ -13,4 +13,4 @@ pip install fastkmeanspp
 ## 📖 Learn More
 
 For tutorials, API reference, visit the official site:  
-👉 [fastkmeanspp Documentation](https://felixlaplante0.github.io/fastkmeanspp)
+👉 [fastkmeanspp's documentation](https://felixlaplante0.github.io/fastkmeanspp)
