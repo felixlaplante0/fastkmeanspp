@@ -8,10 +8,10 @@ import numpy.typing as npt
 from scipy.linalg.blas import sgemm
 from sklearn.base import BaseEstimator, ClusterMixin
 from sklearn.utils._param_validation import Interval, validate_params
-from sklearn.utils.validation import check_is_fitted
+from sklearn.utils.validation import check_is_fitted, validate_data
 
 
-class KMeans(BaseEstimator, ClusterMixin):
+class KMeans(ClusterMixin, BaseEstimator):
     """K-means clustering using FAISS.
 
     Attributes:
@@ -129,34 +129,6 @@ class KMeans(BaseEstimator, ClusterMixin):
 
         return centroids
 
-    @staticmethod
-    def _validate_X(X: npt.ArrayLike, order: str) -> np.ndarray:
-        """Validates and converts the data matrix.
-
-        Args:
-            X (npt.ArrayLike): The fixed data matrix.
-            order (str): The order of the array.
-
-        Raises:
-            ValueError: If `X` is not 2D array.
-            ValueError: If `X` contains inf values.
-            ValueError: If `X` contains NaN values.
-
-        Returns:
-            np.ndarray: The validated and converted data matrix.
-        """
-        X_f32 = cast(np.ndarray, np.asarray(X, dtype=np.float32, order=order))  # type: ignore
-
-        if X.ndim != 2:  # noqa: PLR2004
-            raise ValueError("X must be a 2D array")
-
-        if np.isinf(X_f32).any():
-            raise ValueError("X must not contain inf values")
-        if np.isnan(X_f32).any():
-            raise ValueError("X must not contain NaN values")
-
-        return X_f32
-
     @validate_params(
         {
             "X": ["array-like"],
@@ -177,7 +149,7 @@ class KMeans(BaseEstimator, ClusterMixin):
         Returns:
             Self: The fitted model.
         """
-        X_f32 = self._validate_X(X, order="F")
+        X_f32 = np.asarray(validate_data(self, X), dtype=np.float32, order="F")  # type: ignore
         index = faiss.IndexFlatL2(X_f32.shape[1])
         kmeans = faiss.Clustering(X_f32.shape[1], self.n_clusters)
 
@@ -222,7 +194,7 @@ class KMeans(BaseEstimator, ClusterMixin):
         """
         check_is_fitted(self, "cluster_centers_")
 
-        X_f32 = self._validate_X(X, order="K")
+        X_f32 = np.asarray(validate_data(self, X), dtype=np.float32)  # type: ignore
         index = faiss.IndexFlatL2(X_f32.shape[1])
         index.add(self.cluster_centers_)  # type: ignore
 
