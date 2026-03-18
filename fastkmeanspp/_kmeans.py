@@ -194,7 +194,7 @@ class KMeans(ClusterMixin, BaseEstimator):
         """
         check_is_fitted(self, "cluster_centers_")
 
-        X_f32 = np.asarray(validate_data(self, X), dtype=np.float32)  # type: ignore
+        X_f32 = np.asarray(validate_data(self, X, dtype=np.float32))  # type: ignore
         index = faiss.IndexFlatL2(X_f32.shape[1])
         index.add(self.cluster_centers_)  # type: ignore
 
