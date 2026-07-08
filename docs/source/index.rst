@@ -6,11 +6,11 @@ Fast KMeans++
 Installation
 ------------
 
-You can install the package via pip:
+You can install the package via ``python -m pip``:
 
 .. code-block:: bash
 
-   pip install fastkmeanspp
+   python -m pip install fastkmeanspp
 
 API Reference
 -------------

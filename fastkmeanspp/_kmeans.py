@@ -1,6 +1,6 @@
 from functools import cached_property
 from numbers import Integral
-from typing import Self, cast
+from typing import ClassVar, Self, cast
 
 import faiss
 import numpy as np
@@ -31,19 +31,17 @@ class KMeans(ClusterMixin, BaseEstimator):
     n_iter: int
     n_local_trials: int | None
     random_state: int | None
-    X_: np.ndarray | None
-    cluster_centers_: np.ndarray | None
-    labels_: np.ndarray | None
+    X_: np.ndarray
+    cluster_centers_: np.ndarray
+    labels_: np.ndarray
 
-    @validate_params(
-        {
-            "n_clusters": [Interval(Integral, 1, None, closed="left")],
-            "n_iter": [Interval(Integral, 1, None, closed="left")],
-            "n_local_trials": [Interval(Integral, 1, None, closed="left"), None],
-            "random_state": ["random_state"],
-        },
-        prefer_skip_nested_validation=True,
-    )
+    _parameter_constraints: ClassVar[dict] = {
+        "n_clusters": [Interval(Integral, 1, None, closed="left")],
+        "n_iter": [Interval(Integral, 1, None, closed="left")],
+        "n_local_trials": [Interval(Integral, 1, None, closed="left"), None],
+        "random_state": ["random_state"],
+    }
+
     def __init__(
         self,
         n_clusters: int = 8,
@@ -66,9 +64,6 @@ class KMeans(ClusterMixin, BaseEstimator):
         self.n_iter = n_iter
         self.n_local_trials = n_local_trials
         self.random_state = random_state
-        self.X_ = None
-        self.cluster_centers_ = None
-        self.labels_ = None
 
     @staticmethod
     def _dists(X: np.ndarray, y: np.ndarray, XX: np.ndarray) -> np.ndarray:
@@ -107,12 +102,13 @@ class KMeans(ClusterMixin, BaseEstimator):
         dists = self._dists(X, centroids[:1], XX).ravel()
         inertia = dists.sum()
 
-        if self.n_local_trials is None:
-            self.n_local_trials = 2 + int(np.log(self.n_clusters))
+        n_local_trials = self.n_local_trials
+        if n_local_trials is None:
+            n_local_trials = 2 + int(np.log(self.n_clusters))
 
         for i in range(1, self.n_clusters):
             candidate_ids = rng.choice(
-                X.shape[0], size=self.n_local_trials, p=dists / inertia
+                X.shape[0], size=n_local_trials, p=dists / inertia
             )
             candidates = np.asfortranarray(X[candidate_ids])
 
@@ -149,7 +145,11 @@ class KMeans(ClusterMixin, BaseEstimator):
         Returns:
             Self: The fitted model.
         """
-        X_f32 = np.asarray(validate_data(self, X), dtype=np.float32, order="F")  # type: ignore
+        self._validate_params()
+
+        X_f32 = np.asfortranarray(
+            cast(np.ndarray, validate_data(self, X, dtype=np.float32))
+        )
         index = faiss.IndexFlatL2(X_f32.shape[1])
         kmeans = faiss.Clustering(X_f32.shape[1], self.n_clusters)
 
@@ -194,7 +194,10 @@ class KMeans(ClusterMixin, BaseEstimator):
         """
         check_is_fitted(self, "cluster_centers_")
 
-        X_f32 = np.asarray(validate_data(self, X, dtype=np.float32))  # type: ignore
+        X_f32 = cast(
+            np.ndarray,
+            validate_data(self, X, dtype=np.float32, reset=False),
+        )
         index = faiss.IndexFlatL2(X_f32.shape[1])
         index.add(self.cluster_centers_)  # type: ignore
 
