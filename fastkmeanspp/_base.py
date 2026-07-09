@@ -16,13 +16,12 @@ class KMeans(ClusterMixin, BaseEstimator):
 
     Attributes:
         n_clusters (int): The number of clusters to form.
-        n_iter (int): The number of iterations to run the k-means
-            algorithm.
-        n_local_trials  (int | None): The number of seeding trials for
-            centroids initialization.
+        n_iter (int): The number of iterations to run the k-means algorithm.
+        n_local_trials  (int | None): The number of seeding trials for centroids
+            initialization.
         X_ (np.ndarray | None): The input data matrix.
-        random_state (int | None) Determines random number generation for
-            centroid initialization.
+        random_state (int | None) Determines random number generation for centroid
+            initialization.
         cluster_centers_ (np.ndarray | None): Coordinates of cluster centers.
         labels_ (np.ndarray | None): Labels of each point (index) in X.
     """
