@@ -1,3 +1,5 @@
+"""Tests for the fastkmeanspp package."""
+
 import numpy as np
 import pytest
 from sklearn.base import clone
