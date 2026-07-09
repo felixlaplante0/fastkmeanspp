@@ -140,7 +140,7 @@ class KMeans(ClusterMixin, BaseEstimator):
             y (None, optional): Placeholder for y.
 
         Raises:
-            ValueError: If `X` contains inf or NaN values.
+            ValueError: If ``X`` contains inf or NaN values.
 
         Returns:
             Self: The fitted model.
@@ -190,8 +190,8 @@ class KMeans(ClusterMixin, BaseEstimator):
             X (npt.ArrayLike): The input data.
 
         Raises:
-            ValueError: If `X` contains inf or NaN values.
-            ValueError: If `self.cluster_centers_` is not set.
+            ValueError: If ``X`` contains inf or NaN values.
+            ValueError: If ``self.cluster_centers_`` is not set.
 
         Returns:
             np.ndarray The predicted cluster indices.
@@ -215,7 +215,7 @@ class KMeans(ClusterMixin, BaseEstimator):
             X (npt.ArrayLike): The input data.
 
         Raises:
-            ValueError: If `self.X_`, `self.labels_` and `self.cluster_centers_` are
+            ValueError: If ``self.X_``, ``self.labels_`` and ``self.cluster_centers_`` are
                 not all set.
 
         Returns:
