@@ -215,8 +215,8 @@ class KMeans(ClusterMixin, BaseEstimator):
             X (npt.ArrayLike): The input data.
 
         Raises:
-            ValueError: If ``self.X_``, ``self.labels_`` and ``self.cluster_centers_`` are
-                not all set.
+            ValueError: If ``self.X_``, ``self.labels_`` and ``self.cluster_centers_``
+                are not all set.
 
         Returns:
             float: The inertia of the fitted model.
