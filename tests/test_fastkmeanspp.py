@@ -61,6 +61,12 @@ def test_params():
         estimator.fit(_data())
 
 
+def test_too_many_clusters():
+    """Checks fit rejects more clusters than samples."""
+    with pytest.raises(ValueError, match="n_clusters must be less than or equal"):
+        KMeans(n_clusters=7).fit(_data())
+
+
 def test_trials():
     """Checks default local trials without mutating constructor parameters."""
     estimator = KMeans(n_clusters=3, n_iter=2, random_state=42)

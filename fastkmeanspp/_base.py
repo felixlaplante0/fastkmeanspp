@@ -150,8 +150,12 @@ class KMeans(ClusterMixin, BaseEstimator):
         X_f32 = np.asfortranarray(
             cast(np.ndarray, validate_data(self, X, dtype=np.float32))
         )
-        index = faiss.IndexFlatL2(X_f32.shape[1])
-        kmeans = faiss.Clustering(X_f32.shape[1], self.n_clusters)
+        n, d = X_f32.shape
+        if self.n_clusters > n:
+            raise ValueError("n_clusters must be less than or equal to n_samples.")
+
+        index = faiss.IndexFlatL2(d)
+        kmeans = faiss.Clustering(d, self.n_clusters)
 
         init_centroids = self._init_centroids(X_f32)
 
@@ -166,7 +170,7 @@ class KMeans(ClusterMixin, BaseEstimator):
         self.cluster_centers_ = cast(
             np.ndarray,
             faiss.vector_to_array(kmeans.centroids).reshape(  # type: ignore
-                self.n_clusters, X_f32.shape[1]
+                self.n_clusters, d
             ),
         )
         self.labels_ = cast(np.ndarray, index.search(X_f32, 1)[1].ravel())  # type: ignore

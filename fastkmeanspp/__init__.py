@@ -1,5 +1,5 @@
 """Fast K-means++ clustering using FAISS."""
 
-from ._kmeans import KMeans
+from ._base import KMeans
 
 __all__ = ["KMeans"]
