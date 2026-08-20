@@ -5,7 +5,7 @@ from typing import ClassVar, Self, cast
 import faiss
 import numpy as np
 import numpy.typing as npt
-from scipy.linalg.blas import sgemm
+from blis.py import gemm
 from sklearn.base import BaseEstimator, ClusterMixin
 from sklearn.utils._param_validation import Interval, validate_params
 from sklearn.utils.validation import check_is_fitted, validate_data
@@ -77,7 +77,10 @@ class KMeans(ClusterMixin, BaseEstimator):
             np.ndarray: The computed pairwise distances.
         """
         yy = np.einsum("ij,ij->i", y, y)
-        dists = XX - cast(np.ndarray, sgemm(2.0, X, y, trans_b=True)) + yy
+        dists = XX - cast(
+            np.ndarray,
+            gemm(X, np.ascontiguousarray(y), trans2=True, alpha=2.0),
+        ) + yy
         np.clip(dists, 0, None, out=dists)
 
         return dists
@@ -146,7 +149,7 @@ class KMeans(ClusterMixin, BaseEstimator):
         """
         self._validate_params()
 
-        X_f32 = np.asfortranarray(
+        X_f32 = np.ascontiguousarray(
             cast(np.ndarray, validate_data(self, X, dtype=np.float32))
         )
         n, d = X_f32.shape
