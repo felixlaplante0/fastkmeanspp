@@ -5,10 +5,11 @@ from typing import ClassVar, Self, cast
 import faiss
 import numpy as np
 import numpy.typing as npt
-from scipy.linalg.blas import sgemm
 from sklearn.base import BaseEstimator, ClusterMixin
 from sklearn.utils._param_validation import Interval, validate_params
 from sklearn.utils.validation import check_is_fitted, validate_data
+
+from ._highway import dists
 
 
 class KMeans(ClusterMixin, BaseEstimator):
@@ -64,24 +65,6 @@ class KMeans(ClusterMixin, BaseEstimator):
         self.n_local_trials = n_local_trials
         self.random_state = random_state
 
-    @staticmethod
-    def _dists(X: np.ndarray, y: np.ndarray, XX: np.ndarray) -> np.ndarray:
-        """Computes the pairwise distances between a fixed data matrix and some points.
-
-        Args:
-            X (np.ndarray): The fixed data matrix.
-            y (np.ndarray): The non fixed points.
-            XX (np.ndarray): The fixed matrix squared norm.
-
-        Returns:
-            np.ndarray: The computed pairwise distances.
-        """
-        yy = np.einsum("ij,ij->i", y, y)
-        dists = XX - cast(np.ndarray, sgemm(2.0, X, y, trans_b=True)) + yy
-        np.clip(dists, 0, None, out=dists)
-
-        return dists
-
     def _init_centroids(self, X: np.ndarray) -> np.ndarray:
         """Initializes the centroids in a K-means++ fashion.
 
@@ -96,10 +79,8 @@ class KMeans(ClusterMixin, BaseEstimator):
         centroids = np.empty((self.n_clusters, X.shape[1]), dtype=X.dtype)
         centroids[0] = X[rng.integers(X.shape[0])]
 
-        XX = np.einsum("ij,ij->i", X, X)[:, None]
-
-        dists = self._dists(X, centroids[:1], XX).ravel()
-        inertia = dists.sum()
+        distances = dists(X, centroids[:1]).ravel()
+        inertia = distances.sum()
 
         n_local_trials = self.n_local_trials
         if n_local_trials is None:
@@ -107,17 +88,17 @@ class KMeans(ClusterMixin, BaseEstimator):
 
         for i in range(1, self.n_clusters):
             candidate_ids = rng.choice(
-                X.shape[0], size=n_local_trials, p=dists / inertia
+                X.shape[0], size=n_local_trials, p=distances / inertia
             )
-            candidates = np.asfortranarray(X[candidate_ids])
+            candidates = X[candidate_ids]
 
-            current_candidates_dists = self._dists(X, candidates, XX)
-            candidates_dists = np.minimum(current_candidates_dists, dists[:, None])
+            candidate_distances = dists(X, candidates)
+            candidate_distances = np.minimum(candidate_distances, distances[:, None])
 
-            inertias = candidates_dists.sum(axis=0)
+            inertias = candidate_distances.sum(axis=0)
             best_inertia = inertias.argmin()
             best_candidate = candidate_ids[best_inertia]
-            dists = candidates_dists[:, best_inertia]
+            distances = candidate_distances[:, best_inertia]
             inertia = inertias[best_inertia]
 
             centroids[i] = X[best_candidate]
@@ -146,7 +127,7 @@ class KMeans(ClusterMixin, BaseEstimator):
         """
         self._validate_params()
 
-        X_f32 = np.asfortranarray(
+        X_f32 = np.ascontiguousarray(
             cast(np.ndarray, validate_data(self, X, dtype=np.float32))
         )
         n, d = X_f32.shape
