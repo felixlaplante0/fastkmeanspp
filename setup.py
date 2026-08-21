@@ -10,7 +10,9 @@ from setuptools import Extension, setup
 ROOT = Path(__file__).resolve().parent
 HIGHWAY = ROOT / "highway"
 
-COMPILE_ARGS = ["/O2"] if sys.platform == "win32" else ["-O3"]
+COMPILE_ARGS = (
+    ["/O2", "/std:c++14"] if sys.platform == "win32" else ["-O3", "-std=c++14"]
+)
 
 setup(
     ext_modules=cythonize(
