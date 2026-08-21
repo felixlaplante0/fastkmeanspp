@@ -14,7 +14,7 @@ A scikit-learn-compatible KMeans implementation optimized for fast centroid init
 
 <p align="center">
   <a href="https://pypi.org/project/fastkmeanspp/"><img src="https://img.shields.io/pypi/v/fastkmeanspp?logo=pypi&logoColor=white" alt="PyPI version"></a>
-  <a href="https://pypi.org/project/fastkmeanspp/"><img src="https://img.shields.io/badge/python-3.11%2B-blue?logo=python&logoColor=white" alt="Supported Python versions: 3.11+"></a>
+  <a href="https://pypi.org/project/fastkmeanspp/"><img src="https://img.shields.io/badge/python-3.11--3.14-blue?logo=python&logoColor=white" alt="Supported Python versions: 3.11–3.14"></a>
   <a href="https://github.com/felixlaplante0/fastkmeanspp/actions/workflows/lint.yml"><img src="https://github.com/felixlaplante0/fastkmeanspp/actions/workflows/lint.yml/badge.svg" alt="Lint status"></a>
   <a href="https://codecov.io/gh/felixlaplante0/fastkmeanspp"><img src="https://codecov.io/gh/felixlaplante0/fastkmeanspp/graph/badge.svg" alt="Coverage"></a>
   <a href="https://fastkmeanspp.readthedocs.io/en/latest/"><img src="https://readthedocs.org/projects/fastkmeanspp/badge/?version=latest" alt="Documentation status"></a>
