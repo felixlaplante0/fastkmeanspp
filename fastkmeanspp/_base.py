@@ -9,7 +9,7 @@ from sklearn.base import BaseEstimator, ClusterMixin
 from sklearn.utils._param_validation import Interval, validate_params
 from sklearn.utils.validation import check_is_fitted, validate_data
 
-from ._highway import dists
+from ._highway import _Cdist
 
 
 class KMeans(ClusterMixin, BaseEstimator):
@@ -20,6 +20,7 @@ class KMeans(ClusterMixin, BaseEstimator):
         n_iter (int): The number of iterations to run the k-means algorithm.
         n_local_trials  (int | None): The number of seeding trials for centroids
             initialization.
+        n_jobs (int | None): Number of threads used for local trials.
         X_ (np.ndarray | None): The input data matrix.
         random_state (int | None) Determines random number generation for centroid
             initialization.
@@ -30,6 +31,7 @@ class KMeans(ClusterMixin, BaseEstimator):
     n_clusters: int
     n_iter: int
     n_local_trials: int | None
+    n_jobs: int | None
     random_state: int | None
     X_: np.ndarray
     cluster_centers_: np.ndarray
@@ -39,6 +41,7 @@ class KMeans(ClusterMixin, BaseEstimator):
         "n_clusters": [Interval(Integral, 1, None, closed="left")],
         "n_iter": [Interval(Integral, 1, None, closed="left")],
         "n_local_trials": [Interval(Integral, 1, None, closed="left"), None],
+        "n_jobs": [Interval(Integral, 1, None, closed="left"), None],
         "random_state": ["random_state"],
     }
 
@@ -48,6 +51,7 @@ class KMeans(ClusterMixin, BaseEstimator):
         n_iter: int = 20,
         n_local_trials: int | None = None,
         random_state: int | None = None,
+        n_jobs: int | None = None,
     ):
         """Initializes the KMeans class.
 
@@ -59,10 +63,14 @@ class KMeans(ClusterMixin, BaseEstimator):
                 centroids initialization. Defaults to None.
             random_state (int | None, optional) Determines random number generation for
                 centroid initialization. Defaults to None.
+            n_jobs (int | None, optional): Number of threads used for local trials.
+                ``None`` uses the smaller of the logical processor and local-trial
+                counts. Defaults to None.
         """
         self.n_clusters = n_clusters
         self.n_iter = n_iter
         self.n_local_trials = n_local_trials
+        self.n_jobs = n_jobs
         self.random_state = random_state
 
     def _init_centroids(self, X: np.ndarray) -> np.ndarray:
@@ -79,28 +87,28 @@ class KMeans(ClusterMixin, BaseEstimator):
         centroids = np.empty((self.n_clusters, X.shape[1]), dtype=X.dtype)
         centroids[0] = X[rng.integers(X.shape[0])]
 
-        distances = dists(X, centroids[:1]).ravel()
-        inertia = distances.sum()
-
+        n_jobs = 0 if self.n_jobs is None else self.n_jobs
         n_local_trials = self.n_local_trials
         if n_local_trials is None:
             n_local_trials = 2 + int(np.log(self.n_clusters))
 
+        cdist = _Cdist(n_jobs, n_local_trials)
+        distances = cdist(X, centroids[:1]).ravel()
+
         for i in range(1, self.n_clusters):
+            probabilities = np.asarray(distances, dtype=np.float64)
+            probabilities /= probabilities.sum()
             candidate_ids = rng.choice(
-                X.shape[0], size=n_local_trials, p=distances / inertia
+                X.shape[0], size=n_local_trials, p=probabilities
             )
             candidates = X[candidate_ids]
 
-            candidate_distances = dists(X, candidates)
-            candidate_distances = np.minimum(candidate_distances, distances[:, None])
-
-            inertias = candidate_distances.sum(axis=0)
+            candidate_distances, inertias = cdist.minimum(
+                X, candidates, distances
+            )
             best_inertia = inertias.argmin()
             best_candidate = candidate_ids[best_inertia]
             distances = candidate_distances[:, best_inertia]
-            inertia = inertias[best_inertia]
-
             centroids[i] = X[best_candidate]
 
         return centroids

@@ -2,6 +2,7 @@
 
 import numpy as np
 import pytest
+from fastkmeanspp._highway import _Cdist, cdist
 from sklearn.base import clone
 from sklearn.exceptions import NotFittedError
 
@@ -62,6 +63,9 @@ def test_params():
     with pytest.raises(ValueError, match="n_clusters"):
         estimator.fit(_data())
 
+    with pytest.raises(ValueError, match="n_jobs"):
+        KMeans(n_jobs=0).fit(_data())
+
 
 def test_too_many_clusters():
     """Checks fit rejects more clusters than samples."""
@@ -76,3 +80,42 @@ def test_trials():
     estimator.fit(_data())
 
     assert estimator.n_local_trials is None
+
+
+def test_threaded_trials():
+    """Checks threaded local trials preserve the seeded initialization."""
+    X = _data()
+    serial = KMeans(
+        n_clusters=3, n_iter=2, n_local_trials=4, random_state=42, n_jobs=1
+    )
+    automatic = KMeans(n_clusters=3, n_iter=2, n_local_trials=4, random_state=42)
+    threaded = KMeans(
+        n_clusters=3, n_iter=2, n_local_trials=4, n_jobs=2, random_state=42
+    )
+
+    serial.fit(X)
+    automatic.fit(X)
+    threaded.fit(X)
+
+    np.testing.assert_allclose(automatic.cluster_centers_, serial.cluster_centers_)
+    np.testing.assert_allclose(threaded.cluster_centers_, serial.cluster_centers_)
+    np.testing.assert_array_equal(threaded.labels_, serial.labels_)
+    assert threaded.inertia_ == pytest.approx(serial.inertia_)
+
+
+def test_cdist():
+    """Checks serial and parallel native distances against NumPy."""
+    X = np.ascontiguousarray(_data(), dtype=np.float32)
+    y = X[[0, 2, 4, 5]]
+    expected = ((X[:, None, :] - y[None, :, :]) ** 2).sum(axis=2)
+
+    np.testing.assert_allclose(cdist(X, y, 1), expected)
+    np.testing.assert_allclose(cdist(X, y, 2), expected)
+    np.testing.assert_allclose(cdist(X, y), expected)
+    assert cdist(X, y).dtype == np.float32
+
+    minimums = np.linspace(0.1, 2.0, len(X), dtype=np.float32)
+    expected_minimum = np.minimum(expected, minimums[:, None])
+    actual, inertias = _Cdist(2, len(y)).minimum(X, y, minimums)
+    np.testing.assert_allclose(actual, expected_minimum)
+    np.testing.assert_allclose(inertias, expected_minimum.sum(axis=0))
