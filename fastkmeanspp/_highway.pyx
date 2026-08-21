@@ -16,10 +16,10 @@ cdef extern from "_highway_kernel.h" namespace "fastkmeanspp":
 
 
 def cdist(X, y, size_t n_jobs=0) -> np.ndarray:
-    return _Cdist(n_jobs, y.shape[0])(X, y)
+    return _CdistWorker(n_jobs, y.shape[0])(X, y)
 
 
-cdef class _Cdist:
+cdef class _CdistWorker:
     cdef void* pool
 
     def __cinit__(self, size_t n_jobs, size_t m):

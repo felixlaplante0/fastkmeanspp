@@ -9,7 +9,7 @@ from sklearn.base import BaseEstimator, ClusterMixin
 from sklearn.utils._param_validation import Interval, validate_params
 from sklearn.utils.validation import check_is_fitted, validate_data
 
-from ._highway import _Cdist
+from ._highway import _CdistWorker
 
 
 class KMeans(ClusterMixin, BaseEstimator):
@@ -92,7 +92,7 @@ class KMeans(ClusterMixin, BaseEstimator):
         if n_local_trials is None:
             n_local_trials = 2 + int(np.log(self.n_clusters))
 
-        cdist = _Cdist(n_jobs, n_local_trials)
+        cdist = _CdistWorker(n_jobs, n_local_trials)
         distances = cdist(X, centroids[:1]).ravel()
 
         for i in range(1, self.n_clusters):
