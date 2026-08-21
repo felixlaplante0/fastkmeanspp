@@ -54,8 +54,9 @@ jobs:
         with:
           pattern: wheels-*
           merge-multiple: true
+          path: dist
       - name: Publish to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
-          packages-dir: .
+          packages-dir: dist
           password: ${{ secrets.PYPI_TOKEN }}
