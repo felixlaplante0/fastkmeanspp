@@ -22,6 +22,7 @@ setup(
                 [
                     "fastkmeanspp/_highway.pyx",
                     "fastkmeanspp/_highway_kernel.cc",
+                    "highway/hwy/abort.cc",
                     "highway/hwy/targets.cc",
                 ],
                 include_dirs=[np.get_include(), str(HIGHWAY)],
