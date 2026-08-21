@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="256" height="256" viewBox="0 0 256 256">
+  <defs>
+    <clipPath id="clip0">
+      <rect width="256" height="256"/>
+    </clipPath>
+    <linearGradient id="grad1" x1="11%" y1="8%" x2="89%" y2="92%" gradientUnits="objectBoundingBox">
+      <stop offset="0%" stop-color="#0E1220"/>
+      <stop offset="100%" stop-color="#261C47"/>
+    </linearGradient>
+    <linearGradient id="grad2" x1="8%" y1="4%" x2="100%" y2="36%" gradientUnits="objectBoundingBox">
+      <stop offset="0%" stop-color="#715ED7"/>
+      <stop offset="100%" stop-color="#5748A5"/>
+    </linearGradient>
+    <linearGradient id="grad3" x1="8%" y1="4%" x2="100%" y2="36%" gradientUnits="objectBoundingBox">
+      <stop offset="0%" stop-color="#4292DC"/>
+      <stop offset="100%" stop-color="#3370A9"/>
+    </linearGradient>
+    <linearGradient id="grad4" x1="8%" y1="4%" x2="100%" y2="36%" gradientUnits="objectBoundingBox">
+      <stop offset="0%" stop-color="#FF8866"/>
+      <stop offset="100%" stop-color="#C8684E"/>
+    </linearGradient>
+    <linearGradient id="grad5" x1="8%" y1="4%" x2="100%" y2="36%" gradientUnits="objectBoundingBox">
+      <stop offset="0%" stop-color="#42BDAF"/>
+      <stop offset="100%" stop-color="#339186"/>
+    </linearGradient>
+    <linearGradient id="grad6" x1="8%" y1="4%" x2="100%" y2="36%" gradientUnits="objectBoundingBox">
+      <stop offset="0%" stop-color="#FFB854"/>
+      <stop offset="100%" stop-color="#CE8D41"/>
+    </linearGradient>
+    <linearGradient id="grad7" x1="8%" y1="4%" x2="100%" y2="36%" gradientUnits="objectBoundingBox">
+      <stop offset="0%" stop-color="#9E78DF"/>
+      <stop offset="100%" stop-color="#795CAB"/>
+    </linearGradient>
+    <linearGradient id="grad8" x1="8%" y1="4%" x2="100%" y2="36%" gradientUnits="objectBoundingBox">
+      <stop offset="0%" stop-color="#F06793"/>
+      <stop offset="100%" stop-color="#B84F71"/>
+    </linearGradient>
+    <linearGradient id="grad9" x1="8%" y1="4%" x2="100%" y2="36%" gradientUnits="objectBoundingBox">
+      <stop offset="0%" stop-color="#45B180"/>
+      <stop offset="100%" stop-color="#358862"/>
+    </linearGradient>
+    <linearGradient id="grad10" x1="8%" y1="4%" x2="100%" y2="36%" gradientUnits="objectBoundingBox">
+      <stop offset="0%" stop-color="#FFDC5D"/>
+      <stop offset="100%" stop-color="#CFA947"/>
+    </linearGradient>
+    <linearGradient id="grad11" x1="8%" y1="4%" x2="100%" y2="36%" gradientUnits="objectBoundingBox">
+      <stop offset="0%" stop-color="#F278AE"/>
+      <stop offset="100%" stop-color="#BA5C85"/>
+    </linearGradient>
+    <linearGradient id="grad12" x1="8%" y1="4%" x2="100%" y2="36%" gradientUnits="objectBoundingBox">
+      <stop offset="0%" stop-color="#5797DF"/>
+      <stop offset="100%" stop-color="#4374AB"/>
+    </linearGradient>
+    <linearGradient id="grad13" x1="8%" y1="4%" x2="100%" y2="36%" gradientUnits="objectBoundingBox">
+      <stop offset="0%" stop-color="#E06868"/>
+      <stop offset="100%" stop-color="#AC5050"/>
+    </linearGradient>
+    <linearGradient id="grad14" x1="8%" y1="4%" x2="100%" y2="36%" gradientUnits="objectBoundingBox">
+      <stop offset="0%" stop-color="#68AED4"/>
+      <stop offset="100%" stop-color="#5085A3"/>
+    </linearGradient>
+    <linearGradient id="grad15" x1="8%" y1="4%" x2="100%" y2="36%" gradientUnits="objectBoundingBox">
+      <stop offset="0%" stop-color="#CE81D9"/>
+      <stop offset="100%" stop-color="#9E63A7"/>
+    </linearGradient>
+  </defs>
+  <g>
+    <rect width="256" height="256" rx="60" ry="60" fill="url(#grad1)"/>
+    <g clip-path="url(#clip0)">
+      <g transform="translate(134.44, 0)">
+        <path d="M1.29 58.66L0 0L42.06 0L47.67 51.52L41.81 75.42L37.99 79.32L10.54 79.87L1.29 58.66Z" fill="url(#grad2)" stroke="#FFFFFF" stroke-width="2.4" stroke-opacity="0.82"/>
+      </g>
+      <g transform="translate(46.42, 39.27)">
+        <path d="M77.96 56.98L69.28 67.1L0 53.25L2.99 22.75L18.78 0L77.96 56.98Z" fill="url(#grad3)" stroke="#FFFFFF" stroke-width="2.4" stroke-opacity="0.82"/>
+      </g>
+      <g transform="translate(106.53, 134.08)">
+        <path d="M56.03 121.92L0 121.92L11.51 54.03L93.73 0L56.03 121.92Z" fill="url(#grad4)" stroke="#FFFFFF" stroke-width="2.4" stroke-opacity="0.82"/>
+      </g>
+      <g transform="translate(176.25, 7.66)">
+        <path d="M48.5 0L53.08 2.45L62.18 9.91L69.64 19.01L75.18 29.38L78.6 40.63L79.24 47.12L0 67.76L5.86 43.86L48.5 0Z" fill="url(#grad5)" stroke="#FFFFFF" stroke-width="2.4" stroke-opacity="0.82"/>
+      </g>
+      <g transform="translate(67.31, 0)">
+        <path d="M0 0L67.13 0L68.42 58.66L3.33 16.36L0 0Z" fill="url(#grad6)" stroke="#FFFFFF" stroke-width="2.4" stroke-opacity="0.82"/>
+      </g>
+      <g transform="translate(0, 92.52)">
+        <path d="M0 47.53L0 29.09L46.42 0L115.7 13.85L112.83 45.11L0 47.53Z" fill="url(#grad7)" stroke="#FFFFFF" stroke-width="2.4" stroke-opacity="0.82"/>
+      </g>
+      <g transform="translate(0, 34)">
+        <path d="M0 87.61L0 26L1.15 14.29L4.57 3.04L6.19 0L49.41 28.02L46.42 58.52L0 87.61Z" fill="url(#grad8)" stroke="#FFFFFF" stroke-width="2.4" stroke-opacity="0.82"/>
+      </g>
+      <g transform="translate(112.83, 79.32)">
+        <path d="M87.43 54.76L5.21 108.79L0 58.31L2.87 27.05L11.55 16.93L32.15 0.55L59.6 0L92.93 49.16L87.43 54.76Z" fill="url(#grad9)" stroke="#FFFFFF" stroke-width="2.4" stroke-opacity="0.82"/>
+      </g>
+      <g transform="translate(0, 137.63)">
+        <path d="M106.53 118.37L60 118.37L48.29 117.22L37.04 113.8L26.67 108.26L17.57 100.8L10.11 91.7L4.57 81.33L1.15 70.08L0 58.37L0 2.42L112.83 0L118.04 50.48L106.53 118.37Z" fill="url(#grad10)" stroke="#FFFFFF" stroke-width="2.4" stroke-opacity="0.82"/>
+      </g>
+      <g transform="translate(176.5, 0)">
+        <path d="M19.5 0L31.21 1.15L42.46 4.57L48.25 7.66L5.61 51.52L0 0L19.5 0Z" fill="url(#grad11)" stroke="#FFFFFF" stroke-width="2.4" stroke-opacity="0.82"/>
+      </g>
+      <g transform="translate(162.56, 128.48)">
+        <path d="M93.44 21.04L93.44 67.52L92.29 79.23L88.87 90.48L83.33 100.85L75.87 109.95L66.77 117.41L56.4 122.95L45.15 126.37L33.44 127.52L0 127.52L37.7 5.6L43.2 0L93.44 21.04Z" fill="url(#grad12)" stroke="#FFFFFF" stroke-width="2.4" stroke-opacity="0.82"/>
+      </g>
+      <g transform="translate(65.2, 16.36)">
+        <path d="M5.44 0L70.53 42.3L79.78 63.51L59.18 79.89L0 22.91L5.44 0Z" fill="url(#grad13)" stroke="#FFFFFF" stroke-width="2.4" stroke-opacity="0.82"/>
+      </g>
+      <g transform="translate(172.43, 54.78)">
+        <path d="M83.06 0L83.57 5.22L83.57 94.74L33.33 73.7L0 24.54L3.82 20.64L83.06 0Z" fill="url(#grad14)" stroke="#FFFFFF" stroke-width="2.4" stroke-opacity="0.82"/>
+      </g>
+      <g transform="translate(6.19, 0)">
+        <path d="M0 34L3.92 26.67L11.38 17.57L20.48 10.11L30.85 4.57L42.1 1.15L53.81 0L61.12 0L64.45 16.36L59.01 39.27L43.22 62.02L0 34Z" fill="url(#grad15)" stroke="#FFFFFF" stroke-width="2.4" stroke-opacity="0.82"/>
+      </g>
+    </g>
+  </g>
+</svg>

@@ -44,3 +44,5 @@ napoleon_attr_annotations = True
 
 html_theme = "furo"
 html_static_path = ["_static"]
+html_logo = "_static/fastkmeanspp-logo.svg"
+html_favicon = "_static/fastkmeanspp-logo.svg"
