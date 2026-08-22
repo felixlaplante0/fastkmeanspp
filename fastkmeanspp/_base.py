@@ -56,7 +56,7 @@ class KMeans(ClusterMixin, BaseEstimator):
         n_iter: int = 20,
         n_local_trials: int | None = None,
         random_state: int | None = None,
-        n_jobs: int | None = None,
+        n_jobs: int | None = -1,
     ):
         """Initializes the KMeans class.
 
@@ -70,7 +70,7 @@ class KMeans(ClusterMixin, BaseEstimator):
                 centroid initialization. Defaults to None.
             n_jobs (int | None, optional): Number of threads used for local trials.
                 ``None`` uses one thread and ``-1`` uses all available threads.
-                Defaults to None.
+                Defaults to -1.
         """
         self.n_clusters = n_clusters
         self.n_iter = n_iter
