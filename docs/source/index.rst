@@ -6,12 +6,12 @@ Fast KMeans++
    <section class="hero">
      <img class="hero-logo" src="_static/fastkmeanspp-logo.svg" alt="Fast KMeans++ logo">
      <p class="eyebrow">K-MEANS++, BUILT FOR SPEED</p>
-     <h1>Fast centroid initialization for KMeans.</h1>
+     <h1>Fast KMeans++ initialization.</h1>
      <p class="hero-copy">FastKMeans++ combines Highway SIMD distance kernels,
      parallel initialization, and FAISS clustering behind a scikit-learn-compatible API.</p>
      <div class="hero-actions">
        <a class="primary" href="getting-started.html">Get started</a>
-       <a class="secondary" href="https://github.com/felixlaplante0/fastkmeanspp/blob/main/examples/tutorial.ipynb">Run the MNIST example</a>
+       <a class="secondary" href="tutorial.html">See the tutorial</a>
      </div>
    </section>
 
@@ -52,53 +52,35 @@ processing before handing the initialized centroids to FAISS.
 
       Fit, predict, inspect labels, and read cluster centers with a familiar estimator API.
 
-Get started
------------
+Learn more
+----------
 
-Install ``fastkmeanspp`` from PyPI:
+.. grid:: 1 2 2 3
+   :gutter: 3
 
-.. code-block:: bash
+   .. grid-item-card:: Get started
+      :link: getting-started
+      :link-type: doc
 
-   python -m pip install fastkmeanspp
+      Install FastKMeans++ and run your first clustering model.
 
-.. code-block:: python
+   .. grid-item-card:: Highway
+      :link: highway
+      :link-type: doc
 
-   import numpy as np
-   from fastkmeanspp import KMeans
+      See how SIMD distance calculations and parallel rows speed KMeans++ initialization.
 
-   X = np.array([[0.0, 0.0], [0.1, 0.2], [4.0, 4.0], [4.2, 3.9]])
-   model = KMeans(n_clusters=2, random_state=42)
-   model.fit(X)
+   .. grid-item-card:: API reference
+      :link: modules
+      :link-type: doc
 
-   labels = model.predict(X)
-
-Highway and parallel distance computation
--------------------------------------------
-
-The distance kernel uses `Google Highway <https://github.com/google/highway>`__
-to dispatch portable SIMD implementations at runtime. Fused multiply-add
-operations calculate squared distances several values at a time. Highway's
-thread pool also divides independent sample rows across workers during
-initialization. Set ``n_jobs=1`` for serial execution or ``n_jobs=-1`` to use
-all available threads.
-
-Tutorial
---------
-
-The :doc:`tutorial` notebook compares FastKMeans++ with scikit-learn on MNIST.
-It reports adjusted Rand index before timing both ``K=10`` and ``K=100``.
-
-API Reference
--------------
-
-.. autoclass:: fastkmeanspp.KMeans
-   :members:
-   :undoc-members:
-   :show-inheritance:
+      Browse the scikit-learn-style ``KMeans`` estimator API.
 
 .. toctree::
    :hidden:
    :maxdepth: 2
 
    getting-started
+   highway
    tutorial
+   modules
