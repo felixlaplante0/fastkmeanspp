@@ -6,7 +6,7 @@ import faiss
 import numpy as np
 import numpy.typing as npt
 from sklearn.base import BaseEstimator, ClusterMixin
-from sklearn.utils._param_validation import Interval, validate_params
+from sklearn.utils._param_validation import Interval, Options, validate_params
 from sklearn.utils.validation import check_is_fitted, validate_data
 
 from ._highway import _CdistWorker
@@ -43,7 +43,7 @@ class KMeans(ClusterMixin, BaseEstimator):
         "n_iter": [Interval(Integral, 1, None, closed="left")],
         "n_local_trials": [Interval(Integral, 1, None, closed="left"), None],
         "n_jobs": [
-            Interval(Integral, -1, -1),
+            Options(Integral, {-1}),
             Interval(Integral, 1, None, closed="left"),
             None,
         ],
