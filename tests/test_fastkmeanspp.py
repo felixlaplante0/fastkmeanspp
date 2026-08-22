@@ -116,6 +116,6 @@ def test_cdist():
 
     minimums = np.linspace(0.1, 2.0, len(X), dtype=np.float32)
     expected_minimum = np.minimum(expected, minimums[:, None])
-    actual, inertias = _CdistWorker(2, len(y)).minimum(X, y, minimums)
+    actual, inertias = _CdistWorker(2).minimum(X, y, minimums)
     np.testing.assert_allclose(actual, expected_minimum)
     np.testing.assert_allclose(inertias, expected_minimum.sum(axis=0))

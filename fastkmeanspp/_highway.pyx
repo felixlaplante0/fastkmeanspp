@@ -5,9 +5,9 @@ cimport numpy as cnp
 
 
 cdef extern from "_highway_kernel.h" namespace "fastkmeanspp":
-    void* highway_cdist_pool_create(size_t n_jobs, size_t m) except +
-    void highway_cdist_pool_destroy(void* pool) noexcept nogil
-    void highway_cdist(
+    void* create_pool(size_t n_jobs) except +
+    void destroy_pool(void* pool) noexcept nogil
+    void run_cdist(
         const float* x, const float* y, float* out,
         size_t n, size_t m, size_t d,
         const float* minimums, size_t minimum_stride,
@@ -16,18 +16,18 @@ cdef extern from "_highway_kernel.h" namespace "fastkmeanspp":
 
 
 def cdist(X, y, size_t n_jobs=0) -> np.ndarray:
-    return _CdistWorker(n_jobs, y.shape[0])(X, y)
+    return _CdistWorker(n_jobs)(X, y)
 
 
 cdef class _CdistWorker:
     cdef void* pool
 
-    def __cinit__(self, size_t n_jobs, size_t m):
-        self.pool = highway_cdist_pool_create(n_jobs, m)
+    def __cinit__(self, size_t n_jobs):
+        self.pool = create_pool(n_jobs)
 
     def __dealloc__(self):
         with nogil:
-            highway_cdist_pool_destroy(self.pool)
+            destroy_pool(self.pool)
 
     def __call__(
         self,
@@ -38,7 +38,7 @@ cdef class _CdistWorker:
             (X.shape[0], y.shape[0]), dtype=np.float32
         )
         with nogil:
-            highway_cdist(
+            run_cdist(
                 &X[0, 0], &y[0, 0], &out[0, 0],
                 X.shape[0], y.shape[0], X.shape[1], NULL, 0, NULL, self.pool
             )
@@ -57,7 +57,7 @@ cdef class _CdistWorker:
             y.shape[0], dtype=np.float32
         )
         with nogil:
-            highway_cdist(
+            run_cdist(
                 &X[0, 0], &y[0, 0], &out[0, 0],
                 X.shape[0], y.shape[0], X.shape[1],
                 &minimums[0], minimums.strides[0] // sizeof(float),

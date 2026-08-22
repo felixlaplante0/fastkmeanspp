@@ -10,9 +10,9 @@ from setuptools import Extension, setup
 ROOT = Path(__file__).resolve().parent
 HIGHWAY = ROOT / "highway"
 
-COMPILE_ARGS = ["/O2", "/std:c++14"] if sys.platform == "win32" else [
+COMPILE_ARGS = ["/O2", "/std:c++17"] if sys.platform == "win32" else [
     "-O3",
-    "-std=c++14",
+    "-std=c++17",
     "-pthread",
 ]
 LINK_ARGS = [] if sys.platform == "win32" else ["-pthread"]
@@ -27,6 +27,8 @@ setup(
                     "fastkmeanspp/_highway_kernel.cc",
                     "highway/hwy/abort.cc",
                     "highway/hwy/aligned_allocator.cc",
+                    "highway/hwy/contrib/sort/vqsort.cc",
+                    "highway/hwy/contrib/sort/vqsort_have.cc",
                     "highway/hwy/contrib/sort/vqsort_f64a.cc",
                     "highway/hwy/contrib/thread_pool/thread_pool.cc",
                     "highway/hwy/contrib/thread_pool/topology.cc",

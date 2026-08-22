@@ -92,7 +92,7 @@ class KMeans(ClusterMixin, BaseEstimator):
         if n_local_trials is None:
             n_local_trials = 2 + int(np.log(self.n_clusters))
 
-        cdist = _CdistWorker(n_jobs, n_local_trials)
+        cdist = _CdistWorker(n_jobs)
         distances = cdist(X, centroids[:1]).ravel()
 
         for i in range(1, self.n_clusters):

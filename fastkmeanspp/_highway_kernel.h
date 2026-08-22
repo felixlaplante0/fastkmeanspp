@@ -4,11 +4,11 @@
 
 namespace fastkmeanspp {
 
-void* highway_cdist_pool_create(std::size_t n_jobs, std::size_t m);
+void* create_pool(std::size_t n_jobs);
 
-void highway_cdist_pool_destroy(void* pool);
+void destroy_pool(void* pool);
 
-void highway_cdist(
+void run_cdist(
     const float* x,
     const float* y,
     float* out,

@@ -73,17 +73,12 @@ struct CdistPool {
 
 }  // namespace
 
-void* highway_cdist_pool_create(
-    const std::size_t n_jobs,
-    const std::size_t m
-) {
-  const std::size_t automatic_jobs = 1 + hwy::ThreadPool::MaxThreads();
-  const std::size_t requested_jobs = n_jobs == 0 ? automatic_jobs : n_jobs;
-  const std::size_t effective_jobs = std::min(requested_jobs, m);
-  if (effective_jobs <= 1) return nullptr;
+void* create_pool(std::size_t n_jobs) {
+  n_jobs = n_jobs == 0 ? 1 + hwy::ThreadPool::MaxThreads() : n_jobs;
+  if (n_jobs <= 1) return nullptr;
 
   auto* pool = new CdistPool;
-  pool->pool = hwy::MakeUniqueAligned<hwy::ThreadPool>(effective_jobs - 1);
+  pool->pool = hwy::MakeUniqueAligned<hwy::ThreadPool>(n_jobs - 1);
   if (!pool->pool) {
     delete pool;
     throw std::bad_alloc();
@@ -92,11 +87,11 @@ void* highway_cdist_pool_create(
   return pool;
 }
 
-void highway_cdist_pool_destroy(void* pool) {
+void destroy_pool(void* pool) {
   delete static_cast<CdistPool*>(pool);
 }
 
-void highway_cdist(
+void run_cdist(
     const float* x,
     const float* y,
     float* out,
@@ -115,7 +110,7 @@ void highway_cdist(
         task_inertias, i_begin, i_end);
   };
 
-  if (pool == nullptr || m <= 1) {
+  if (pool == nullptr) {
     run(0, n, inertias);
     return;
   }
