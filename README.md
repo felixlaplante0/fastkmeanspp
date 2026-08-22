@@ -38,7 +38,8 @@ scikit-learn's `KMeans` when initialization is the bottleneck.
   thread pool.
 - **scikit-learn compatibility**: Provides familiar `fit`, `predict`, `labels_`,
   `cluster_centers_`, and `inertia_` interfaces.
-- **FAISS clustering**: Uses FAISS for the Lloyd iterations after initialization.
+- **FAISS clustering**: Uses [FAISS](https://github.com/facebookresearch/faiss)
+  for the Lloyd iterations after initialization.
 
 Highway supplies the low-level fused operations and portable SIMD dispatch used
 by the distance kernel. Its thread pool splits distance rows across workers, so
@@ -76,8 +77,3 @@ For tutorials and the API reference, visit the
 [fastkmeanspp documentation](https://fastkmeanspp.readthedocs.io/en/latest/).
 The [MNIST tutorial](examples/tutorial.ipynb) compares clustering quality and
 runtime with scikit-learn for `K=10` and `K=100`.
-
-## 📚 References
-
-- [Google Highway](https://github.com/google/highway)
-- [FAISS](https://github.com/facebookresearch/faiss)
