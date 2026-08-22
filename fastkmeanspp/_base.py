@@ -20,7 +20,8 @@ class KMeans(ClusterMixin, BaseEstimator):
         n_iter (int): The number of iterations to run the k-means algorithm.
         n_local_trials  (int | None): The number of seeding trials for centroids
             initialization.
-        n_jobs (int | None): Number of threads used for local trials.
+        n_jobs (int | None): Number of threads used for local trials. ``None`` uses
+            one thread, ``-1`` uses all available threads.
         X_ (np.ndarray | None): The input data matrix.
         random_state (int | None) Determines random number generation for centroid
             initialization.
@@ -41,7 +42,11 @@ class KMeans(ClusterMixin, BaseEstimator):
         "n_clusters": [Interval(Integral, 1, None, closed="left")],
         "n_iter": [Interval(Integral, 1, None, closed="left")],
         "n_local_trials": [Interval(Integral, 1, None, closed="left"), None],
-        "n_jobs": [Interval(Integral, 1, None, closed="left"), None],
+        "n_jobs": [
+            Interval(Integral, -1, -1),
+            Interval(Integral, 1, None, closed="left"),
+            None,
+        ],
         "random_state": ["random_state"],
     }
 
@@ -64,8 +69,8 @@ class KMeans(ClusterMixin, BaseEstimator):
             random_state (int | None, optional) Determines random number generation for
                 centroid initialization. Defaults to None.
             n_jobs (int | None, optional): Number of threads used for local trials.
-                ``None`` uses the smaller of the logical processor and local-trial
-                counts. Defaults to None.
+                ``None`` uses one thread and ``-1`` uses all available threads.
+                Defaults to None.
         """
         self.n_clusters = n_clusters
         self.n_iter = n_iter
@@ -87,7 +92,7 @@ class KMeans(ClusterMixin, BaseEstimator):
         centroids = np.empty((self.n_clusters, X.shape[1]), dtype=X.dtype)
         centroids[0] = X[rng.integers(X.shape[0])]
 
-        n_jobs = 0 if self.n_jobs is None else self.n_jobs
+        n_jobs = 1 if self.n_jobs is None else 0 if self.n_jobs == -1 else self.n_jobs
         n_local_trials = self.n_local_trials
         if n_local_trials is None:
             n_local_trials = 2 + int(np.log(self.n_clusters))
