@@ -2,7 +2,7 @@
   <img src="https://raw.githubusercontent.com/felixlaplante0/fastkmeanspp/main/docs/source/_static/fastkmeanspp-logo.svg" alt="fastkmeanspp logo" width="128">
 </p>
 
-<h1 align="center">fastkmeanspp</h1>
+<h1 align="center">K-Means++</h1>
 
 <p align="center"><strong>Fast KMeans++ initialization.</strong><br>
 A scikit-learn-compatible KMeans implementation optimized for fast centroid initialization.</p>
