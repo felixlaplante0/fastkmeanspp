@@ -8,7 +8,7 @@ void* create_pool(std::size_t n_jobs);
 
 void destroy_pool(void* pool);
 
-void run_cdist(
+void dispatch_cdist(
     const float* x,
     const float* y,
     float* out,

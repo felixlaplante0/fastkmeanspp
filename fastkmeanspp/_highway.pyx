@@ -7,7 +7,7 @@ cimport numpy as cnp
 cdef extern from "_highway_kernel.h" namespace "fastkmeanspp":
     void* create_pool(size_t n_jobs) except +
     void destroy_pool(void* pool) noexcept nogil
-    void run_cdist(
+    void dispatch_cdist(
         const float* x, const float* y, float* out,
         size_t n, size_t m, size_t d,
         const float* minimums, size_t minimum_stride,
@@ -38,7 +38,7 @@ cdef class _CdistWorker:
             (X.shape[0], y.shape[0]), dtype=np.float32
         )
         with nogil:
-            run_cdist(
+            dispatch_cdist(
                 &X[0, 0], &y[0, 0], &out[0, 0],
                 X.shape[0], y.shape[0], X.shape[1], NULL, 0, NULL, self.pool
             )
@@ -57,7 +57,7 @@ cdef class _CdistWorker:
             y.shape[0], dtype=np.float32
         )
         with nogil:
-            run_cdist(
+            dispatch_cdist(
                 &X[0, 0], &y[0, 0], &out[0, 0],
                 X.shape[0], y.shape[0], X.shape[1],
                 &minimums[0], minimums.strides[0] // sizeof(float),

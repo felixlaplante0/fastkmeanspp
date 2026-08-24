@@ -18,7 +18,7 @@ namespace HWY_NAMESPACE {
 
 namespace hn = hwy::HWY_NAMESPACE;
 
-void HighwayCdist(
+void cdist_kernel(
     const float* x,
     const float* y,
     float* out,
@@ -63,7 +63,7 @@ HWY_AFTER_NAMESPACE();
 
 #if HWY_ONCE
 namespace fastkmeanspp {
-HWY_EXPORT(HighwayCdist);
+HWY_EXPORT(cdist_kernel);
 
 namespace {
 
@@ -91,7 +91,7 @@ void destroy_pool(void* pool) {
   delete static_cast<CdistPool*>(pool);
 }
 
-void run_cdist(
+void dispatch_cdist(
     const float* x,
     const float* y,
     float* out,
@@ -105,7 +105,7 @@ void run_cdist(
 ) {
   const auto run = [&](const std::size_t i_begin, const std::size_t i_end,
                        float* task_inertias) {
-    HWY_DYNAMIC_DISPATCH(HighwayCdist)(
+    HWY_DYNAMIC_DISPATCH(cdist_kernel)(
         x, y, out, m, d, minimums, minimum_stride,
         task_inertias, i_begin, i_end);
   };
