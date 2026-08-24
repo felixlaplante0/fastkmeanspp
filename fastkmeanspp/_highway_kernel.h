@@ -1,7 +1,6 @@
 #pragma once
 
 #include <cstddef>
-#include <cstdint>
 
 namespace fastkmeanspp {
 
@@ -19,26 +18,6 @@ void dispatch_cdist(
     const float *minimums,
     std::size_t minimum_stride,
     float *inertias,
-    void *pool
-);
-
-void dispatch_lloyd(
-    const float *x,
-    float *centers,
-    std::int64_t *labels,
-    std::size_t n,
-    std::size_t k,
-    std::size_t d,
-    void *pool
-);
-
-void dispatch_assign(
-    const float *x,
-    const float *centers,
-    std::int64_t *labels,
-    std::size_t n,
-    std::size_t k,
-    std::size_t d,
     void *pool
 );
 

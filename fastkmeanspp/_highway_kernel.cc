@@ -2,7 +2,6 @@
 
 #include <algorithm>
 #include <cstdint>
-#include <limits>
 #include <new>
 #include <vector>
 
@@ -58,80 +57,6 @@ void cdist_kernel(
   }
 }
 
-void lloyd_kernel(
-    const float *x,
-    const float *centers,
-    std::int64_t *labels,
-    float *sums,
-    std::size_t *counts,
-    const std::size_t k,
-    const std::size_t d,
-    const std::size_t i_begin,
-    const std::size_t i_end
-) {
-  const hn::ScalableTag<float> tag;
-  const std::size_t lanes = hn::Lanes(tag);
-  for (std::size_t i = i_begin; i < i_end; ++i) {
-    float best_distance = std::numeric_limits<float>::max();
-    std::size_t best_cluster = 0;
-    for (std::size_t j = 0; j < k; ++j) {
-      auto sum = hn::Zero(tag);
-      std::size_t p = 0;
-      for (; p + lanes <= d; p += lanes) {
-        const auto xv = hn::LoadU(tag, x + i * d + p);
-        const auto center = hn::LoadU(tag, centers + j * d + p);
-        const auto delta = hn::Sub(xv, center);
-        sum = hn::MulAdd(delta, delta, sum);
-      }
-      float distance = hn::ReduceSum(tag, sum);
-      for (; p < d; ++p) {
-        const float delta = x[i * d + p] - centers[j * d + p];
-        distance += delta * delta;
-      }
-      if (distance < best_distance) {
-        best_distance = distance;
-        best_cluster = j;
-      }
-    }
-    labels[i] = static_cast<std::int64_t>(best_cluster);
-    if (sums == nullptr) continue;
-
-    ++counts[best_cluster];
-    std::size_t p = 0;
-    for (; p + lanes <= d; p += lanes) {
-      const auto old_sum = hn::LoadU(tag, sums + best_cluster * d + p);
-      const auto xv = hn::LoadU(tag, x + i * d + p);
-      hn::StoreU(hn::Add(old_sum, xv), tag, sums + best_cluster * d + p);
-    }
-    for (; p < d; ++p) {
-      sums[best_cluster * d + p] += x[i * d + p];
-    }
-  }
-}
-
-void update_kernel(
-    float *centers,
-    const float *sums,
-    const std::size_t *counts,
-    const std::size_t k,
-    const std::size_t d
-) {
-  const hn::ScalableTag<float> tag;
-  const std::size_t lanes = hn::Lanes(tag);
-  for (std::size_t j = 0; j < k; ++j) {
-    if (counts[j] == 0) continue;
-    const auto count = hn::Set(tag, static_cast<float>(counts[j]));
-    std::size_t p = 0;
-    for (; p + lanes <= d; p += lanes) {
-      const auto sum = hn::LoadU(tag, sums + j * d + p);
-      hn::StoreU(hn::Div(sum, count), tag, centers + j * d + p);
-    }
-    for (; p < d; ++p) {
-      centers[j * d + p] = sums[j * d + p] / counts[j];
-    }
-  }
-}
-
 }  // namespace HWY_NAMESPACE
 }  // namespace fastkmeanspp
 HWY_AFTER_NAMESPACE();
@@ -139,8 +64,6 @@ HWY_AFTER_NAMESPACE();
 #if HWY_ONCE
 namespace fastkmeanspp {
 HWY_EXPORT(cdist_kernel);
-HWY_EXPORT(lloyd_kernel);
-HWY_EXPORT(update_kernel);
 
 namespace {
 
@@ -210,79 +133,6 @@ void dispatch_cdist(
       }
     }
   }
-}
-
-void dispatch_lloyd(
-    const float *x,
-    float *centers,
-    std::int64_t *labels,
-    const std::size_t n,
-    const std::size_t k,
-    const std::size_t d,
-    void *pool
-) {
-  const std::size_t num_tasks = pool == nullptr
-      ? 1
-      : std::min(n, 4 * static_cast<CdistPool*>(pool)->pool->NumWorkers());
-  const std::size_t rows_per_task = (n + num_tasks - 1) / num_tasks;
-  std::vector<float> partial_sums(num_tasks * k * d, 0.0F);
-  std::vector<std::size_t> partial_counts(num_tasks * k, 0);
-  const auto run = [&](const std::size_t task) {
-    const std::size_t i_begin = task * rows_per_task;
-    HWY_DYNAMIC_DISPATCH(lloyd_kernel)(
-        x, centers, labels,
-        partial_sums.data() + task * k * d,
-        partial_counts.data() + task * k,
-        k, d, i_begin, std::min(i_begin + rows_per_task, n));
-  };
-
-  if (pool == nullptr) {
-    run(0);
-  } else {
-    auto& thread_pool = *static_cast<CdistPool*>(pool)->pool;
-    thread_pool.Run(0, num_tasks, [&](const std::uint64_t task, std::size_t) {
-      run(static_cast<std::size_t>(task));
-    });
-  }
-
-  std::vector<float> sums(k * d, 0.0F);
-  std::vector<std::size_t> counts(k, 0);
-  for (std::size_t task = 0; task < num_tasks; ++task) {
-    for (std::size_t j = 0; j < k; ++j) {
-      counts[j] += partial_counts[task * k + j];
-      for (std::size_t p = 0; p < d; ++p) {
-        sums[j * d + p] += partial_sums[task * k * d + j * d + p];
-      }
-    }
-  }
-  HWY_DYNAMIC_DISPATCH(update_kernel)(centers, sums.data(), counts.data(), k, d);
-}
-
-void dispatch_assign(
-    const float *x,
-    const float *centers,
-    std::int64_t *labels,
-    const std::size_t n,
-    const std::size_t k,
-    const std::size_t d,
-    void *pool
-) {
-  const auto run = [&](const std::size_t i_begin, const std::size_t i_end) {
-    HWY_DYNAMIC_DISPATCH(lloyd_kernel)(
-        x, centers, labels, nullptr, nullptr, k, d, i_begin, i_end);
-  };
-  if (pool == nullptr) {
-    run(0, n);
-    return;
-  }
-
-  auto& thread_pool = *static_cast<CdistPool*>(pool)->pool;
-  const std::size_t num_tasks = std::min(n, 4 * thread_pool.NumWorkers());
-  const std::size_t rows_per_task = (n + num_tasks - 1) / num_tasks;
-  thread_pool.Run(0, num_tasks, [&](const std::uint64_t task, std::size_t) {
-    const std::size_t i_begin = static_cast<std::size_t>(task) * rows_per_task;
-    run(i_begin, std::min(i_begin + rows_per_task, n));
-  });
 }
 
 }  // namespace fastkmeanspp

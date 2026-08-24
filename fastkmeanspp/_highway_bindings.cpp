@@ -1,7 +1,6 @@
 #include "_highway_kernel.h"
 
 #include <cstddef>
-#include <cstdint>
 #include <string>
 
 #include <pybind11/numpy.h>
@@ -12,7 +11,6 @@ namespace py = pybind11;
 namespace {
 
 using FloatArray = py::array_t<float, py::array::c_style>;
-using LabelArray = py::array_t<std::int64_t, py::array::c_style>;
 using StridedFloatArray = py::array_t<float, 0>;
 
 void check_ndim(const py::buffer_info &array, int ndim) {
@@ -22,10 +20,11 @@ void check_ndim(const py::buffer_info &array, int ndim) {
   }
 }
 
-class KMeansWorker {
+class CdistWorker {
  public:
-  explicit KMeansWorker(std::size_t n_jobs) : pool_(fastkmeanspp::create_pool(n_jobs)) {}
-  ~KMeansWorker() { fastkmeanspp::destroy_pool(pool_); }
+  explicit CdistWorker(std::size_t n_jobs)
+      : pool_(fastkmeanspp::create_pool(n_jobs)) {}
+  ~CdistWorker() { fastkmeanspp::destroy_pool(pool_); }
 
   py::array_t<float> operator()(const FloatArray &x, const FloatArray &y) const {
     const auto x_info = x.request();
@@ -76,46 +75,6 @@ class KMeansWorker {
     return py::make_tuple(out, inertias);
   }
 
-  void lloyd(const FloatArray &x, const FloatArray &centers,
-             const LabelArray &labels) const {
-    const auto x_info = x.request();
-    const auto centers_info = centers.request();
-    const auto labels_info = labels.request();
-    check_ndim(x_info, 2);
-    check_ndim(centers_info, 2);
-    check_ndim(labels_info, 1);
-    {
-      py::gil_scoped_release release;
-      fastkmeanspp::dispatch_lloyd(
-          static_cast<const float *>(x_info.ptr),
-          static_cast<float *>(centers_info.ptr),
-          static_cast<std::int64_t *>(labels_info.ptr),
-          static_cast<std::size_t>(x_info.shape[0]),
-          static_cast<std::size_t>(centers_info.shape[0]),
-          static_cast<std::size_t>(x_info.shape[1]), pool_);
-    }
-  }
-
-  void assign(const FloatArray &x, const FloatArray &centers,
-              const LabelArray &labels) const {
-    const auto x_info = x.request();
-    const auto centers_info = centers.request();
-    const auto labels_info = labels.request();
-    check_ndim(x_info, 2);
-    check_ndim(centers_info, 2);
-    check_ndim(labels_info, 1);
-    {
-      py::gil_scoped_release release;
-      fastkmeanspp::dispatch_assign(
-          static_cast<const float *>(x_info.ptr),
-          static_cast<const float *>(centers_info.ptr),
-          static_cast<std::int64_t *>(labels_info.ptr),
-          static_cast<std::size_t>(x_info.shape[0]),
-          static_cast<std::size_t>(centers_info.shape[0]),
-          static_cast<std::size_t>(x_info.shape[1]), pool_);
-    }
-  }
-
  private:
   void *pool_;
 };
@@ -123,15 +82,8 @@ class KMeansWorker {
 }  // namespace
 
 PYBIND11_MODULE(_highway, module) {
-  py::class_<KMeansWorker>(module, "KMeansWorker")
+  py::class_<CdistWorker>(module, "_CdistWorker")
       .def(py::init<std::size_t>(), py::arg("n_jobs"))
-      .def("__call__", &KMeansWorker::operator())
-      .def("minimum", &KMeansWorker::minimum)
-      .def("lloyd", &KMeansWorker::lloyd)
-      .def("assign", &KMeansWorker::assign);
-
-  module.def("cdist", [](const FloatArray &x, const FloatArray &y,
-                          std::size_t n_jobs) {
-    return KMeansWorker(n_jobs)(x, y);
-  }, py::arg("X"), py::arg("y"), py::arg("n_jobs") = 0);
+      .def("__call__", &CdistWorker::operator())
+      .def("minimum", &CdistWorker::minimum);
 }
