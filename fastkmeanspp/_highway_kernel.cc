@@ -20,14 +20,14 @@ namespace HWY_NAMESPACE {
 namespace hn = hwy::HWY_NAMESPACE;
 
 void cdist_kernel(
-    const float* x,
-    const float* y,
-    float* out,
+    const float *x,
+    const float *y,
+    float *out,
     const std::size_t m,
     const std::size_t d,
-    const float* minimums,
+    const float *minimums,
     const std::size_t minimum_stride,
-    float* inertias,
+    float *inertias,
     const std::size_t i_begin,
     const std::size_t i_end
 ) {
@@ -59,11 +59,11 @@ void cdist_kernel(
 }
 
 void lloyd_kernel(
-    const float* x,
-    const float* centers,
-    std::int64_t* labels,
-    float* sums,
-    std::size_t* counts,
+    const float *x,
+    const float *centers,
+    std::int64_t *labels,
+    float *sums,
+    std::size_t *counts,
     const std::size_t k,
     const std::size_t d,
     const std::size_t i_begin,
@@ -110,9 +110,9 @@ void lloyd_kernel(
 }
 
 void update_kernel(
-    float* centers,
-    const float* sums,
-    const std::size_t* counts,
+    float *centers,
+    const float *sums,
+    const std::size_t *counts,
     const std::size_t k,
     const std::size_t d
 ) {
@@ -154,7 +154,7 @@ void* create_pool(std::size_t n_jobs) {
   n_jobs = n_jobs == 0 ? 1 + hwy::ThreadPool::MaxThreads() : n_jobs;
   if (n_jobs <= 1) return nullptr;
 
-  auto* pool = new CdistPool;
+  auto *pool = new CdistPool;
   pool->pool = hwy::MakeUniqueAligned<hwy::ThreadPool>(n_jobs - 1);
   if (!pool->pool) {
     delete pool;
@@ -164,24 +164,24 @@ void* create_pool(std::size_t n_jobs) {
   return pool;
 }
 
-void destroy_pool(void* pool) {
+void destroy_pool(void *pool) {
   delete static_cast<CdistPool*>(pool);
 }
 
 void dispatch_cdist(
-    const float* x,
-    const float* y,
-    float* out,
+    const float *x,
+    const float *y,
+    float *out,
     const std::size_t n,
     const std::size_t m,
     const std::size_t d,
-    const float* minimums,
+    const float *minimums,
     const std::size_t minimum_stride,
-    float* inertias,
-    void* pool
+    float *inertias,
+    void *pool
 ) {
   const auto run = [&](const std::size_t i_begin, const std::size_t i_end,
-                       float* task_inertias) {
+                       float *task_inertias) {
     HWY_DYNAMIC_DISPATCH(cdist_kernel)(
         x, y, out, m, d, minimums, minimum_stride,
         task_inertias, i_begin, i_end);
@@ -198,7 +198,7 @@ void dispatch_cdist(
   std::vector<float> partials(inertias == nullptr ? 0 : num_tasks * m);
   thread_pool.Run(0, num_tasks, [&](const std::uint64_t task, std::size_t) {
     const std::size_t i_begin = static_cast<std::size_t>(task) * rows_per_task;
-    float* task_inertias = inertias == nullptr ? nullptr : partials.data() + task * m;
+    float *task_inertias = inertias == nullptr ? nullptr : partials.data() + task * m;
     run(i_begin, std::min(i_begin + rows_per_task, n), task_inertias);
   });
 
@@ -213,13 +213,13 @@ void dispatch_cdist(
 }
 
 void dispatch_lloyd(
-    const float* x,
-    float* centers,
-    std::int64_t* labels,
+    const float *x,
+    float *centers,
+    std::int64_t *labels,
     const std::size_t n,
     const std::size_t k,
     const std::size_t d,
-    void* pool
+    void *pool
 ) {
   const std::size_t num_tasks = pool == nullptr
       ? 1
@@ -259,13 +259,13 @@ void dispatch_lloyd(
 }
 
 void dispatch_assign(
-    const float* x,
-    const float* centers,
-    std::int64_t* labels,
+    const float *x,
+    const float *centers,
+    std::int64_t *labels,
     const std::size_t n,
     const std::size_t k,
     const std::size_t d,
-    void* pool
+    void *pool
 ) {
   const auto run = [&](const std::size_t i_begin, const std::size_t i_end) {
     HWY_DYNAMIC_DISPATCH(lloyd_kernel)(
