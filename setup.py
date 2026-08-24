@@ -10,9 +10,8 @@ from setuptools import setup
 ROOT = Path(__file__).resolve().parent
 HIGHWAY = ROOT / "highway"
 
-COMPILE_ARGS = ["/O2", "/std:c++17"] if sys.platform == "win32" else [
+COMPILE_ARGS = ["/O2"] if sys.platform == "win32" else [
     "-O3",
-    "-std=c++17",
     "-pthread",
 ]
 LINK_ARGS = [] if sys.platform == "win32" else ["-pthread"]
