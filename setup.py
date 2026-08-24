@@ -20,7 +20,7 @@ LINK_ARGS = [] if sys.platform == "win32" else ["-pthread"]
 
 class ClangBuildExt(build_ext):
     def build_extensions(self):
-        clang_cl = os.environ.get("FASTKMEANSPP_CLANG_CL")
+        clang_cl = os.environ.get("CLANG_CL")
         if clang_cl:
             self.compiler.initialize()
             self.compiler.cc = clang_cl
