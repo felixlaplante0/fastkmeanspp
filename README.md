@@ -87,9 +87,3 @@ print(model.cluster_centers_)
 Set `n_jobs=1` for serial centroid initialization or `n_jobs=-1` to use all
 available threads.
 
-## 📖 Learn More
-
-For tutorials and the API reference, visit the
-[fastkmeanspp documentation](https://fastkmeanspp.readthedocs.io/en/latest/).
-The [MNIST tutorial](examples/tutorial.ipynb) compares clustering quality and
-runtime with scikit-learn for `K=10` and `K=100`.
