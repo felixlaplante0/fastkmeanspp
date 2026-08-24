@@ -13,13 +13,21 @@ cdef extern from "_highway_kernel.h" namespace "fastkmeanspp":
         const float* minimums, size_t minimum_stride,
         float* inertias, void* pool
     ) noexcept nogil
+    void dispatch_lloyd(
+        const float* x, float* centers, cnp.int64_t* labels,
+        size_t n, size_t k, size_t d, void* pool
+    ) noexcept nogil
+    void dispatch_assign(
+        const float* x, const float* centers, cnp.int64_t* labels,
+        size_t n, size_t k, size_t d, void* pool
+    ) noexcept nogil
 
 
 def cdist(X, y, size_t n_jobs=0) -> np.ndarray:
-    return _CdistWorker(n_jobs)(X, y)
+    return KMeansWorker(n_jobs)(X, y)
 
 
-cdef class _CdistWorker:
+cdef class KMeansWorker:
     cdef void* pool
 
     def __cinit__(self, size_t n_jobs):
@@ -64,3 +72,27 @@ cdef class _CdistWorker:
                 &inertias[0], self.pool
             )
         return out, inertias
+
+    def lloyd(
+        self,
+        cnp.ndarray[cnp.float32_t, ndim=2, mode="c"] X,
+        cnp.ndarray[cnp.float32_t, ndim=2, mode="c"] centers,
+        cnp.ndarray[cnp.int64_t, ndim=1, mode="c"] labels,
+    ) -> None:
+        with nogil:
+            dispatch_lloyd(
+                &X[0, 0], &centers[0, 0], &labels[0],
+                X.shape[0], centers.shape[0], X.shape[1], self.pool
+            )
+
+    def assign(
+        self,
+        cnp.ndarray[cnp.float32_t, ndim=2, mode="c"] X,
+        cnp.ndarray[cnp.float32_t, ndim=2, mode="c"] centers,
+        cnp.ndarray[cnp.int64_t, ndim=1, mode="c"] labels,
+    ) -> None:
+        with nogil:
+            dispatch_assign(
+                &X[0, 0], &centers[0, 0], &labels[0],
+                X.shape[0], centers.shape[0], X.shape[1], self.pool
+            )

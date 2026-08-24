@@ -2,7 +2,7 @@
 
 import numpy as np
 import pytest
-from fastkmeanspp._highway import _CdistWorker, cdist
+from fastkmeanspp._highway import KMeansWorker, cdist
 from sklearn.base import clone
 from sklearn.exceptions import NotFittedError
 
@@ -85,9 +85,7 @@ def test_trials():
 def test_threaded_trials():
     """Checks threaded local trials preserve the seeded initialization."""
     X = _data()
-    serial = KMeans(
-        n_clusters=3, n_iter=2, n_local_trials=4, random_state=42, n_jobs=1
-    )
+    serial = KMeans(n_clusters=3, n_iter=2, n_local_trials=4, random_state=42, n_jobs=1)
     automatic = KMeans(n_clusters=3, n_iter=2, n_local_trials=4, random_state=42)
     threaded = KMeans(
         n_clusters=3, n_iter=2, n_local_trials=4, n_jobs=2, random_state=42
@@ -116,6 +114,28 @@ def test_cdist():
 
     minimums = np.linspace(0.1, 2.0, len(X), dtype=np.float32)
     expected_minimum = np.minimum(expected, minimums[:, None])
-    actual, inertias = _CdistWorker(2).minimum(X, y, minimums)
+    actual, inertias = KMeansWorker(2).minimum(X, y, minimums)
     np.testing.assert_allclose(actual, expected_minimum)
     np.testing.assert_allclose(inertias, expected_minimum.sum(axis=0))
+
+
+def test_lloyd_update_matches_numpy():
+    """Checks one native Lloyd update and final assignment."""
+    X = np.ascontiguousarray(_data(), dtype=np.float32)
+    centers = np.ascontiguousarray([[-1.0, -1.0], [1.0, 1.0]], dtype=np.float32)
+    labels = np.empty(X.shape[0], dtype=np.int64)
+    worker = KMeansWorker(1)
+
+    expected_labels = ((X[:, None, :] - centers[None, :, :]) ** 2).sum(axis=2).argmin(1)
+    expected_centers = np.array(
+        [X[expected_labels == j].mean(axis=0) for j in range(centers.shape[0])],
+        dtype=np.float32,
+    )
+    worker.lloyd(X, centers, labels)
+
+    np.testing.assert_array_equal(labels, expected_labels)
+    np.testing.assert_allclose(centers, expected_centers)
+
+    worker.assign(X, centers, labels)
+    expected_labels = ((X[:, None, :] - centers[None, :, :]) ** 2).sum(axis=2).argmin(1)
+    np.testing.assert_array_equal(labels, expected_labels)

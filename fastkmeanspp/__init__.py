@@ -1,4 +1,4 @@
-"""Fast K-means++ clustering using FAISS."""
+"""Fast K-means++ clustering using Highway."""
 
 from ._base import KMeans
 

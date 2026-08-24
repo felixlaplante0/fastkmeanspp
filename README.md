@@ -32,19 +32,35 @@ scikit-learn's `KMeans` when initialization is the bottleneck.
 
 - **Fast KMeans++ initialization**: Uses optimized squared-distance computations
   while selecting candidate centroids.
-- **SIMD fused operations**: Uses [Google Highway](https://github.com/google/highway)
-  for portable vectorized fused multiply-add distance calculations.
+- **Portable SIMD kernels**: Uses [Google Highway](https://github.com/google/highway)
+  to compile vectorized kernels for supported CPU targets and select the best
+  implementation at runtime.
 - **Parallel initialization**: Computes distance rows in parallel with Highway's
   thread pool.
 - **scikit-learn compatibility**: Provides familiar `fit`, `predict`, `labels_`,
   `cluster_centers_`, and `inertia_` interfaces.
-- **FAISS clustering**: Uses [FAISS](https://github.com/facebookresearch/faiss)
-  for the Lloyd iterations after initialization.
+- **SIMD Lloyd updates**: Uses the same native kernels for nearest-centroid
+  assignment, cluster accumulation, and centroid updates.
 
-Highway supplies the low-level fused operations and portable SIMD dispatch used
-by the distance kernel. Its thread pool splits distance rows across workers, so
-the same KMeans++ selection logic can use multiple CPU cores without changing
-the estimator interface.
+### How Google Highway fits in
+
+Google Highway is a C++ library for portable SIMD programming. The distance and
+clustering kernels are written once with Highway's vector operations. Highway
+then builds target-specific versions for the available instruction sets, such
+as SSE, AVX2, and AVX-512 on x86 CPUs. A small runtime dispatch layer selects
+the strongest target supported by the current processor and keeps a scalar
+fallback for portability.
+
+The distance kernel loads several feature values at a time, subtracts the
+corresponding centroid values, and uses fused multiply-add operations to build
+the squared distance. Feature dimensions that do not fill a complete vector
+are handled by a short scalar tail.
+
+During KMeans++ initialization, Highway's thread pool divides independent data
+rows between workers. During Lloyd updates, each worker finds the closest
+centroid and accumulates feature sums and point counts. The native update then
+turns those sums into new centroid coordinates without changing the estimator
+interface.
 
 ---
 
