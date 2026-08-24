@@ -39,17 +39,17 @@ scikit-learn's `KMeans` when initialization is the bottleneck.
   thread pool.
 - **scikit-learn compatibility**: Provides familiar `fit`, `predict`, `labels_`,
   `cluster_centers_`, and `inertia_` interfaces.
-- **FAISS clustering**: Uses [FAISS](https://github.com/facebookresearch/faiss)
-  for the Lloyd iterations after initialization.
+- **SIMD Lloyd updates**: Uses the same native kernels for nearest-centroid
+  assignment, cluster accumulation, and centroid updates.
 
 ### How Google Highway fits in
 
-Google Highway is a C++ library for portable SIMD programming. The distance
-kernel is written once with Highway's vector operations. Highway then builds
-target-specific versions for the available instruction sets, such as SSE,
-AVX2, and AVX-512 on x86 CPUs. A small runtime dispatch layer selects the
-strongest target supported by the current processor and keeps a scalar fallback
-for portability.
+Google Highway is a C++ library for portable SIMD programming. The distance and
+clustering kernels are written once with Highway's vector operations. Highway
+then builds target-specific versions for the available instruction sets, such
+as SSE, AVX2, and AVX-512 on x86 CPUs. A small runtime dispatch layer selects
+the strongest target supported by the current processor and keeps a scalar
+fallback for portability.
 
 The distance kernel loads several feature values at a time, subtracts the
 corresponding centroid values, and uses fused multiply-add operations to build
@@ -57,8 +57,10 @@ the squared distance. Feature dimensions that do not fill a complete vector
 are handled by a short scalar tail.
 
 During KMeans++ initialization, Highway's thread pool divides independent data
-rows between workers. The initialized centroids are then handed to FAISS for
-the Lloyd iterations.
+rows between workers. During Lloyd updates, each worker finds the closest
+centroid and accumulates feature sums and point counts. The native update then
+turns those sums into new centroid coordinates without changing the estimator
+interface.
 
 ---
 

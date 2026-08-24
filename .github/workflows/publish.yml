@@ -23,8 +23,10 @@ jobs:
             runner: macos-14
           - name: Windows x86-64
             runner: windows-latest
+            clang: true
           - name: Windows ARM64
             runner: windows-11-arm
+            clang: false
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -33,6 +35,8 @@ jobs:
       - name: Build wheels
         uses: pypa/cibuildwheel@v4.1.1
         env:
+          CIBW_BEFORE_ALL_WINDOWS: ${{ matrix.clang && 'choco install llvm -y --no-progress' || '' }}
+          CIBW_ENVIRONMENT_WINDOWS: ${{ matrix.clang && 'FASTKMEANSPP_CLANG_CL="C:\Program Files\LLVM\bin\clang-cl.exe"' || '' }}
           CIBW_BUILD: "cp3*-*"
           CIBW_SKIP: "*-musllinux_*"
           CIBW_ARCHS: native

@@ -8,7 +8,7 @@ Fast KMeans++
      <p class="eyebrow">K-MEANS++, BUILT FOR SPEED</p>
      <h1>Fast KMeans++ initialization.</h1>
      <p class="hero-copy">FastKMeans++ combines Highway SIMD distance kernels,
-     parallel initialization, and FAISS clustering behind a scikit-learn-compatible API.</p>
+     parallel initialization, and Highway clustering behind a scikit-learn-compatible API.</p>
      <div class="hero-actions">
        <a class="primary" href="getting-started.html">Get started</a>
        <a class="secondary" href="tutorial.html">See the tutorial</a>
@@ -32,7 +32,7 @@ Why FastKMeans++?
 KMeans++ initialization repeatedly computes distances between every sample and a
 small set of candidate centroids. FastKMeans++ moves this work into a
 Highway-powered native kernel, using fused SIMD operations and parallel row
-processing before handing the initialized centroids to FAISS.
+processing before running the Highway Lloyd updates.
 
 .. grid:: 1 2 2 3
    :gutter: 3

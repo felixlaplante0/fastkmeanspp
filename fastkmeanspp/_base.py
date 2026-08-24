@@ -2,18 +2,17 @@ from functools import cached_property
 from numbers import Integral
 from typing import ClassVar, Self, cast
 
-import faiss
 import numpy as np
 import numpy.typing as npt
 from sklearn.base import BaseEstimator, ClusterMixin
 from sklearn.utils._param_validation import Interval, Options, validate_params
 from sklearn.utils.validation import check_is_fitted, validate_data
 
-from ._highway import _CdistWorker
+from ._highway import KMeansWorker
 
 
 class KMeans(ClusterMixin, BaseEstimator):
-    """K-means clustering using FAISS.
+    """K-means clustering using Highway.
 
     Attributes:
         n_clusters (int): The number of clusters to form.
@@ -97,7 +96,7 @@ class KMeans(ClusterMixin, BaseEstimator):
         if n_local_trials is None:
             n_local_trials = 2 + int(np.log(self.n_clusters))
 
-        cdist = _CdistWorker(n_jobs)
+        cdist = KMeansWorker(n_jobs)
         distances = cdist(X, centroids[:1]).ravel()
 
         for i in range(1, self.n_clusters):
@@ -139,27 +138,21 @@ class KMeans(ClusterMixin, BaseEstimator):
         X_f32 = np.ascontiguousarray(
             cast(np.ndarray, validate_data(self, X, dtype=np.float32))
         )
-        n, d = X_f32.shape
+        n = X_f32.shape[0]
         if self.n_clusters > n:
             raise ValueError("n_clusters must be less than or equal to n_samples.")
 
-        index = faiss.IndexFlatL2(d)
-        kmeans = faiss.Clustering(d, self.n_clusters)
-        init_centroids = self._init_centroids(X_f32)
-
-        kmeans.centroids.resize(init_centroids.size)
-        faiss.copy_array_to_vector(init_centroids.ravel(), kmeans.centroids)  # type: ignore
-        kmeans.niter = self.n_iter
-        kmeans.min_points_per_centroid = 0
-        kmeans.max_points_per_centroid = -1
-        kmeans.train(X_f32, index)  # type: ignore
+        cluster_centers = self._init_centroids(X_f32)
+        n_jobs = 1 if self.n_jobs is None else 0 if self.n_jobs == -1 else self.n_jobs
+        worker = KMeansWorker(n_jobs)
+        labels = np.empty(n, dtype=np.int64)
+        for _ in range(self.n_iter):
+            worker.lloyd(X_f32, cluster_centers, labels)
+        worker.assign(X_f32, cluster_centers, labels)
 
         self.X_ = X_f32
-        self.cluster_centers_ = cast(
-            np.ndarray,
-            faiss.vector_to_array(kmeans.centroids).reshape(self.n_clusters, d),  # type: ignore
-        )
-        self.labels_ = cast(np.ndarray, index.search(X_f32, 1)[1].ravel())  # type: ignore
+        self.cluster_centers_ = cluster_centers
+        self.labels_ = labels
 
         return self
 
@@ -188,10 +181,11 @@ class KMeans(ClusterMixin, BaseEstimator):
             np.ndarray,
             validate_data(self, X, dtype=np.float32, reset=False),
         )
-        index = faiss.IndexFlatL2(X_f32.shape[1])
-        index.add(self.cluster_centers_)  # type: ignore
-
-        return cast(np.ndarray, index.search(X_f32, 1)[1]).ravel()  # type: ignore
+        centers = np.ascontiguousarray(self.cluster_centers_, dtype=np.float32)
+        labels = np.empty(X_f32.shape[0], dtype=np.int64)
+        n_jobs = 1 if self.n_jobs is None else 0 if self.n_jobs == -1 else self.n_jobs
+        KMeansWorker(n_jobs).assign(X_f32, centers, labels)
+        return labels
 
     @cached_property
     def inertia_(self) -> float:
