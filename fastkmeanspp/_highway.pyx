@@ -2,6 +2,7 @@
 
 import numpy as np
 cimport numpy as cnp
+from libc.stdint cimport int64_t
 
 
 cdef extern from "_highway_kernel.h" namespace "fastkmeanspp":
@@ -14,11 +15,11 @@ cdef extern from "_highway_kernel.h" namespace "fastkmeanspp":
         float* inertias, void* pool
     ) noexcept nogil
     void dispatch_lloyd(
-        const float* x, float* centers, cnp.int64_t* labels,
+        const float* x, float* centers, int64_t* labels,
         size_t n, size_t k, size_t d, void* pool
     ) noexcept nogil
     void dispatch_assign(
-        const float* x, const float* centers, cnp.int64_t* labels,
+        const float* x, const float* centers, int64_t* labels,
         size_t n, size_t k, size_t d, void* pool
     ) noexcept nogil
 
