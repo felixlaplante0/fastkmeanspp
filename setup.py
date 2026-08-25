@@ -1,6 +1,5 @@
 """Build the Highway distance extension."""
 
-import os
 import platform
 import sys
 import sysconfig
@@ -25,7 +24,7 @@ class BuildExt(build_ext):
     """Use MinGW when requested by the Windows build."""
 
     def build_extensions(self):
-        if os.environ.get("FASTKMEANSPP_USE_MINGW") and self.compiler.compiler_type != "mingw32":
+        if sys.platform == "win32" and self.compiler.compiler_type != "mingw32":
             self.compiler = new_compiler(compiler="mingw32")
             customize_compiler(self.compiler)
             python_include = sysconfig.get_config_var("INCLUDEPY")
