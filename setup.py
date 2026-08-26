@@ -1,5 +1,6 @@
 """Build the Highway distance extension."""
 
+import os
 import sys
 from pathlib import Path
 
@@ -11,8 +12,15 @@ ROOT = Path(__file__).resolve().parent
 HIGHWAY = ROOT / "highway"
 WINDOWS = sys.platform == "win32"
 COMPILE_ARGS = ["-O3", "-pthread"]
+LINK_ARGS = ["-pthread"]
+CXX_STD = 0
 if WINDOWS:
-    COMPILE_ARGS += ["-std=c++17", "-DHWY_DISABLE_FUTEX"]
+    COMPILE_ARGS.append("-DHWY_DISABLE_FUTEX")
+
+cxxflags = os.environ.get("CXXFLAGS", "")
+if not {"-std=c++17", "-std=gnu++17"}.intersection(cxxflags.split()):
+    os.environ["CXXFLAGS"] = f"{cxxflags} -std=c++17".strip()
+
 
 EXTENSION = Pybind11Extension(
     "fastkmeanspp._highway",
@@ -32,8 +40,8 @@ EXTENSION = Pybind11Extension(
     ],
     include_dirs=[np.get_include(), str(HIGHWAY), str(ROOT / "fastkmeanspp")],
     extra_compile_args=COMPILE_ARGS,
-    extra_link_args=["-pthread"],
-    cxx_std=0 if WINDOWS else 17,
+    extra_link_args=LINK_ARGS,
+    cxx_std=CXX_STD,
 )
 if WINDOWS:
     EXTENSION.extra_compile_args = [
