@@ -122,7 +122,7 @@ class KMeansWorker {
 
 }  // namespace
 
-PYBIND11_MODULE(_highway, module) {
+PYBIND11_MODULE(_highway, module, py::mod_gil_not_used()) {
   py::class_<KMeansWorker>(module, "KMeansWorker")
       .def(py::init<std::size_t>(), py::arg("n_jobs"))
       .def("__call__", &KMeansWorker::operator())
