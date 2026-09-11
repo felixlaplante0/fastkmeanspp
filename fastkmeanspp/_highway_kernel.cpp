@@ -7,7 +7,7 @@
 #include <vector>
 
 #undef HWY_TARGET_INCLUDE
-#define HWY_TARGET_INCLUDE "_highway_kernel.cc"
+#define HWY_TARGET_INCLUDE "_highway_kernel.cpp"
 #include "hwy/foreach_target.h"
 #include "hwy/highway.h"
 #include "hwy/aligned_allocator.h"

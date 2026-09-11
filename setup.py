@@ -26,7 +26,7 @@ EXTENSION = Pybind11Extension(
     "fastkmeanspp._highway",
     [
         "fastkmeanspp/_highway_bindings.cpp",
-        "fastkmeanspp/_highway_kernel.cc",
+        "fastkmeanspp/_highway_kernel.cpp",
         "highway/hwy/abort.cc",
         "highway/hwy/aligned_allocator.cc",
         "highway/hwy/contrib/sort/vqsort.cc",
