@@ -21,10 +21,10 @@ A scikit-learn-compatible KMeans implementation with fast SIMD distance computat
   <a href="https://github.com/felixlaplante0/fastkmeanspp/blob/main/LICENSE"><img src="https://img.shields.io/github/license/felixlaplante0/fastkmeanspp" alt="License"></a>
 </p>
 
-**fastkmeanspp** is a Python package that implements a KMeans clone from
-[scikit-learn](https://scikit-learn.org/) with a faster KMeans++ centroid
-initialization. It is designed to be a drop-in replacement for
-scikit-learn's `KMeans` when initialization is the bottleneck.
+**fastkmeanspp** is a Python package that provides a `KMeans` estimator with a
+faster KMeans++ centroid initialization. It follows the
+[scikit-learn](https://scikit-learn.org/) estimator API and targets workloads
+where initialization is the bottleneck.
 
 ---
 

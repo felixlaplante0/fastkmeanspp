@@ -1,30 +1,16 @@
 Fast KMeans++
 =============
 
-.. raw:: html
+**fastkmeanspp** is a Python package that provides a ``KMeans`` estimator with a
+faster KMeans++ centroid initialization. It follows the scikit-learn estimator API
+and targets workloads where initialization is the bottleneck.
 
-   <section class="hero">
-     <img class="hero-logo" src="_static/fastkmeanspp-logo.svg" alt="Fast KMeans++ logo">
-     <p class="eyebrow">K-MEANS++, BUILT FOR SPEED</p>
-     <h1>Fast KMeans++ initialization.</h1>
-     <p class="hero-copy">FastKMeans++ combines Highway SIMD distance kernels,
-     parallel initialization, and Highway clustering behind a scikit-learn-compatible API.</p>
-     <div class="hero-actions">
-       <a class="primary" href="getting-started.html">Get started</a>
-       <a class="secondary" href="tutorial.html">See the tutorial</a>
-     </div>
-   </section>
+.. code-block:: bash
 
-.. raw:: html
+   pip install fastkmeanspp
 
-   <aside class="pypi-card">
-     <div>
-       <span class="pypi-kicker">PYTHON PACKAGE</span>
-       <strong>Available on PyPI</strong>
-       <p>Install FastKMeans++ in one command and keep the familiar KMeans workflow.</p>
-     </div>
-     <a href="https://pypi.org/project/fastkmeanspp/">View package&nbsp;→</a>
-   </aside>
+See :doc:`getting-started` for a first example, or the :doc:`tutorial`. The package is
+available on `PyPI <https://pypi.org/project/fastkmeanspp/>`_.
 
 Why FastKMeans++?
 -----------------
@@ -32,25 +18,27 @@ Why FastKMeans++?
 KMeans++ initialization repeatedly computes distances between every sample and a
 small set of candidate centroids. FastKMeans++ moves this work into a
 Highway-powered native kernel, using fused SIMD operations and parallel row
-processing before running the Highway Lloyd updates.
+processing. The Lloyd iterations that follow reuse the same native kernels for
+nearest-centroid assignment and centroid updates. Google Highway picks the
+vectorized kernel for the available CPU at runtime, and the estimator exposes the
+familiar ``fit``, ``predict``, ``labels_``, ``cluster_centers_`` and ``inertia_``
+interface.
 
-.. grid:: 1 2 2 3
-   :gutter: 3
+Quick example
+-------------
 
-   .. grid-item-card:: Fast initialization
-      :class-card: feature-card
+.. code-block:: python
 
-      Spend less time selecting KMeans++ centroids on large, high-dimensional data.
+   import numpy as np
+   from fastkmeanspp import KMeans
 
-   .. grid-item-card:: Portable SIMD
-      :class-card: feature-card
+   X = np.array([[0.0, 0.0], [0.1, 0.2], [4.0, 4.0], [4.2, 3.9]])
+   model = KMeans(n_clusters=2, random_state=42)
+   model.fit(X)
+   labels = model.predict(X)
 
-      Google Highway dispatches vectorized fused operations for the available CPU.
-
-   .. grid-item-card:: Familiar workflow
-      :class-card: feature-card
-
-      Fit, predict, inspect labels, and read cluster centers with a familiar estimator API.
+The :doc:`getting-started` page covers threading options, and the :doc:`tutorial`
+walks through a full example.
 
 Learn more
 ----------
@@ -78,7 +66,6 @@ Learn more
 
 .. toctree::
    :hidden:
-   :maxdepth: 2
 
    getting-started
    highway
