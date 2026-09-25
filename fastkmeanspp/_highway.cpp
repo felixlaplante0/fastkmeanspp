@@ -1,13 +1,16 @@
-#include "_highway_kernel.h"
+#include <pybind11/numpy.h>
+#include <pybind11/pybind11.h>
 
 #include <algorithm>
+#include <cstddef>
 #include <cstdint>
 #include <limits>
 #include <new>
+#include <string>
 #include <vector>
 
 #undef HWY_TARGET_INCLUDE
-#define HWY_TARGET_INCLUDE "_highway_kernel.cpp"
+#define HWY_TARGET_INCLUDE "_highway.cpp"
 #include "hwy/foreach_target.h"
 #include "hwy/highway.h"
 #include "hwy/aligned_allocator.h"
@@ -142,32 +145,6 @@ HWY_EXPORT(cdist_kernel);
 HWY_EXPORT(lloyd_kernel);
 HWY_EXPORT(update_kernel);
 
-namespace {
-
-struct CdistPool {
-  hwy::AlignedUniquePtr<hwy::ThreadPool> pool;
-};
-
-}  // namespace
-
-void* create_pool(std::size_t n_jobs) {
-  n_jobs = n_jobs == 0 ? 1 + hwy::ThreadPool::MaxThreads() : n_jobs;
-  if (n_jobs <= 1) return nullptr;
-
-  auto *pool = new CdistPool;
-  pool->pool = hwy::MakeUniqueAligned<hwy::ThreadPool>(n_jobs - 1);
-  if (!pool->pool) {
-    delete pool;
-    throw std::bad_alloc();
-  }
-  pool->pool->SetWaitMode(hwy::PoolWaitMode::kSpin);
-  return pool;
-}
-
-void destroy_pool(void *pool) {
-  delete static_cast<CdistPool*>(pool);
-}
-
 void dispatch_cdist(
     const float *x,
     const float *y,
@@ -178,7 +155,7 @@ void dispatch_cdist(
     const float *minimums,
     const std::size_t minimum_stride,
     float *inertias,
-    void *pool
+    hwy::ThreadPool *pool
 ) {
   const auto run = [&](const std::size_t i_begin, const std::size_t i_end,
                        float *task_inertias) {
@@ -192,7 +169,7 @@ void dispatch_cdist(
     return;
   }
 
-  auto& thread_pool = *static_cast<CdistPool*>(pool)->pool;
+  auto& thread_pool = *pool;
   const std::size_t num_tasks = std::min(n, 4 * thread_pool.NumWorkers());
   const std::size_t rows_per_task = (n + num_tasks - 1) / num_tasks;
   std::vector<float> partials(inertias == nullptr ? 0 : num_tasks * m);
@@ -219,11 +196,11 @@ void dispatch_lloyd(
     const std::size_t n,
     const std::size_t k,
     const std::size_t d,
-    void *pool
+    hwy::ThreadPool *pool
 ) {
   const std::size_t num_tasks = pool == nullptr
       ? 1
-      : std::min(n, 4 * static_cast<CdistPool*>(pool)->pool->NumWorkers());
+      : std::min(n, 4 * pool->NumWorkers());
   const std::size_t rows_per_task = (n + num_tasks - 1) / num_tasks;
   std::vector<float> partial_sums(num_tasks * k * d, 0.0F);
   std::vector<std::size_t> partial_counts(num_tasks * k, 0);
@@ -239,7 +216,7 @@ void dispatch_lloyd(
   if (pool == nullptr) {
     run(0);
   } else {
-    auto& thread_pool = *static_cast<CdistPool*>(pool)->pool;
+    auto& thread_pool = *pool;
     thread_pool.Run(0, num_tasks, [&](const std::uint64_t task, std::size_t) {
       run(static_cast<std::size_t>(task));
     });
@@ -265,7 +242,7 @@ void dispatch_assign(
     const std::size_t n,
     const std::size_t k,
     const std::size_t d,
-    void *pool
+    hwy::ThreadPool *pool
 ) {
   const auto run = [&](const std::size_t i_begin, const std::size_t i_end) {
     HWY_DYNAMIC_DISPATCH(lloyd_kernel)(
@@ -276,7 +253,7 @@ void dispatch_assign(
     return;
   }
 
-  auto& thread_pool = *static_cast<CdistPool*>(pool)->pool;
+  auto& thread_pool = *pool;
   const std::size_t num_tasks = std::min(n, 4 * thread_pool.NumWorkers());
   const std::size_t rows_per_task = (n + num_tasks - 1) / num_tasks;
   thread_pool.Run(0, num_tasks, [&](const std::uint64_t task, std::size_t) {
@@ -286,4 +263,138 @@ void dispatch_assign(
 }
 
 }  // namespace fastkmeanspp
-#endif
+
+namespace {
+
+namespace py = pybind11;
+
+using FloatArray = py::array_t<float, py::array::c_style>;
+using LabelArray = py::array_t<std::int64_t, py::array::c_style>;
+using StridedFloatArray = py::array_t<float, 0>;
+
+void check_ndim(const py::buffer_info &array, int ndim) {
+  if (array.ndim != ndim) {
+    throw py::value_error("expected an array with " + std::to_string(ndim) +
+                          " dimensions");
+  }
+}
+
+class KMeansWorker {
+ public:
+  explicit KMeansWorker(std::size_t n_jobs) {
+    n_jobs = n_jobs == 0 ? 1 + hwy::ThreadPool::MaxThreads() : n_jobs;
+    if (n_jobs <= 1) return;
+    pool_ = hwy::MakeUniqueAligned<hwy::ThreadPool>(n_jobs - 1);
+    if (!pool_) throw std::bad_alloc();
+    pool_->SetWaitMode(hwy::PoolWaitMode::kSpin);
+  }
+
+  py::array_t<float> operator()(const FloatArray &x, const FloatArray &y) const {
+    const auto x_info = x.request();
+    const auto y_info = y.request();
+    check_ndim(x_info, 2);
+    check_ndim(y_info, 2);
+    py::array_t<float> out({x_info.shape[0], y_info.shape[0]});
+    auto out_info = out.request();
+    {
+      py::gil_scoped_release release;
+      fastkmeanspp::dispatch_cdist(
+          static_cast<const float *>(x_info.ptr),
+          static_cast<const float *>(y_info.ptr),
+          static_cast<float *>(out_info.ptr),
+          static_cast<std::size_t>(x_info.shape[0]),
+          static_cast<std::size_t>(y_info.shape[0]),
+          static_cast<std::size_t>(x_info.shape[1]), nullptr, 0, nullptr,
+          pool_.get());
+    }
+    return out;
+  }
+
+  py::tuple minimum(const FloatArray &x, const FloatArray &y,
+                    const StridedFloatArray &minimums) const {
+    const auto x_info = x.request();
+    const auto y_info = y.request();
+    const auto minimums_info = minimums.request();
+    check_ndim(x_info, 2);
+    check_ndim(y_info, 2);
+    check_ndim(minimums_info, 1);
+    py::array_t<float> out({x_info.shape[0], y_info.shape[0]});
+    py::array_t<float> inertias(y_info.shape[0]);
+    auto out_info = out.request();
+    auto inertias_info = inertias.request();
+    {
+      py::gil_scoped_release release;
+      fastkmeanspp::dispatch_cdist(
+          static_cast<const float *>(x_info.ptr),
+          static_cast<const float *>(y_info.ptr),
+          static_cast<float *>(out_info.ptr),
+          static_cast<std::size_t>(x_info.shape[0]),
+          static_cast<std::size_t>(y_info.shape[0]),
+          static_cast<std::size_t>(x_info.shape[1]),
+          static_cast<const float *>(minimums_info.ptr),
+          static_cast<std::size_t>(minimums_info.strides[0] / sizeof(float)),
+          static_cast<float *>(inertias_info.ptr), pool_.get());
+    }
+    return py::make_tuple(out, inertias);
+  }
+
+  void lloyd(const FloatArray &x, const FloatArray &centers,
+             const LabelArray &labels) const {
+    const auto x_info = x.request();
+    const auto centers_info = centers.request();
+    const auto labels_info = labels.request();
+    check_ndim(x_info, 2);
+    check_ndim(centers_info, 2);
+    check_ndim(labels_info, 1);
+    {
+      py::gil_scoped_release release;
+      fastkmeanspp::dispatch_lloyd(
+          static_cast<const float *>(x_info.ptr),
+          static_cast<float *>(centers_info.ptr),
+          static_cast<std::int64_t *>(labels_info.ptr),
+          static_cast<std::size_t>(x_info.shape[0]),
+          static_cast<std::size_t>(centers_info.shape[0]),
+          static_cast<std::size_t>(x_info.shape[1]), pool_.get());
+    }
+  }
+
+  void assign(const FloatArray &x, const FloatArray &centers,
+              const LabelArray &labels) const {
+    const auto x_info = x.request();
+    const auto centers_info = centers.request();
+    const auto labels_info = labels.request();
+    check_ndim(x_info, 2);
+    check_ndim(centers_info, 2);
+    check_ndim(labels_info, 1);
+    {
+      py::gil_scoped_release release;
+      fastkmeanspp::dispatch_assign(
+          static_cast<const float *>(x_info.ptr),
+          static_cast<const float *>(centers_info.ptr),
+          static_cast<std::int64_t *>(labels_info.ptr),
+          static_cast<std::size_t>(x_info.shape[0]),
+          static_cast<std::size_t>(centers_info.shape[0]),
+          static_cast<std::size_t>(x_info.shape[1]), pool_.get());
+    }
+  }
+
+ private:
+  hwy::AlignedUniquePtr<hwy::ThreadPool> pool_;
+};
+
+}  // namespace
+
+PYBIND11_MODULE(_highway, module, py::mod_gil_not_used()) {
+  py::class_<KMeansWorker>(module, "KMeansWorker")
+      .def(py::init<std::size_t>(), py::arg("n_jobs"))
+      .def("__call__", &KMeansWorker::operator())
+      .def("minimum", &KMeansWorker::minimum)
+      .def("lloyd", &KMeansWorker::lloyd)
+      .def("assign", &KMeansWorker::assign);
+
+  module.def("cdist", [](const FloatArray &x, const FloatArray &y,
+                          std::size_t n_jobs) {
+    return KMeansWorker(n_jobs)(x, y);
+  }, py::arg("X"), py::arg("y"), py::arg("n_jobs") = 0);
+}
+#endif  // HWY_ONCE

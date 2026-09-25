@@ -2,18 +2,13 @@
 
 import os
 import sys
-from pathlib import Path
 
-import numpy as np
 from pybind11.setup_helpers import Pybind11Extension
 from setuptools import setup
 
-ROOT = Path(__file__).resolve().parent
-HIGHWAY = ROOT / "highway"
 WINDOWS = sys.platform == "win32"
 COMPILE_ARGS = ["-O3", "-pthread"]
 LINK_ARGS = ["-pthread"]
-CXX_STD = 0
 if WINDOWS:
     COMPILE_ARGS.append("-DHWY_DISABLE_FUTEX")
 
@@ -21,12 +16,10 @@ cxxflags = os.environ.get("CXXFLAGS", "")
 if not {"-std=c++17", "-std=gnu++17"}.intersection(cxxflags.split()):
     os.environ["CXXFLAGS"] = f"{cxxflags} -std=c++17".strip()
 
-
 EXTENSION = Pybind11Extension(
     "fastkmeanspp._highway",
     [
-        "fastkmeanspp/_highway_bindings.cpp",
-        "fastkmeanspp/_highway_kernel.cpp",
+        "fastkmeanspp/_highway.cpp",
         "highway/hwy/abort.cc",
         "highway/hwy/aligned_allocator.cc",
         "highway/hwy/contrib/sort/vqsort.cc",
@@ -38,16 +31,14 @@ EXTENSION = Pybind11Extension(
         "highway/hwy/targets.cc",
         "highway/hwy/timer.cc",
     ],
-    include_dirs=[np.get_include(), str(HIGHWAY), str(ROOT / "fastkmeanspp")],
+    include_dirs=["highway", "fastkmeanspp"],
     extra_compile_args=COMPILE_ARGS,
     extra_link_args=LINK_ARGS,
-    cxx_std=CXX_STD,
 )
 if WINDOWS:
     EXTENSION.extra_compile_args = [
         arg for arg in EXTENSION.extra_compile_args if not arg.startswith("/")
     ]
-
 
 setup(
     options={"build_ext": {"compiler": "mingw32"}} if WINDOWS else {},
